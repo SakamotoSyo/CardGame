@@ -21,10 +21,12 @@ MonoBehaviour:
     m_Address: Assets/InGame/Image/Stage
     m_ReadOnly: 0
     m_SerializedLabels: []
-  - m_GUID: 52fbff787307d6e46b30ca0178af15a8
-    m_Address: UIPrefab
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ffc6dd47c74e7584caaecbd7574f2ec5
+    m_Address: MasterData
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 0f52a518eeb9fe54aa94be36c52b8f96, type: 2}
   m_SchemaSet:
