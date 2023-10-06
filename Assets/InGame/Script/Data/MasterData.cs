@@ -30,12 +30,16 @@ public sealed class MasterData
         var data = await Addressables.LoadAssetAsync<EffectMasterTableAsset>(ResourceKey.MasterData.EffectMasterTableAsset);
         _effectMasterTable = data.MasterTable;
         _effectMasterTable.Init();
-
-        List<UniTask> masterDataDownloads = new List<UniTask>()
+        //ネットワークに接続できなかったら
+        if (Application.internetReachability != NetworkReachability.NotReachable)
         {
-           LoadMasterData<CardDataTable>("Card")
-        };
-        await masterDataDownloads;
+            List<UniTask> masterDataDownloads = new List<UniTask>()
+            {
+               LoadMasterData<CardDataTable>("Card")
+            };
+            await masterDataDownloads;
+        }
+
         await LoadLocalData();
     }
 
@@ -74,11 +78,11 @@ public sealed class MasterData
     /// <summary>
     /// ローカルのデータをロードする
     /// </summary>
-    private async UniTask LoadLocalData() 
+    private async UniTask LoadLocalData()
     {
         var cards = await LocalData.LoadAsyncData<CardDataTable>(GetFileName("Card"));
 
-        foreach (var d in cards.Data) 
+        foreach (var d in cards.Data)
         {
             LoadCardData card = new LoadCardData();
             card.Id = d.Id;
@@ -86,6 +90,7 @@ public sealed class MasterData
             card.Rare = d.Rare;
             card.Discription = d.Discription;
             card.EffectId = d.EffectId;
+            card.Cost = d.Cost;
             _cardData.Add(d.Id, card);
         }
     }
