@@ -5,9 +5,9 @@ using UnityEngine;
 
 public class UnitSetView : MonoBehaviour
 {
-    [SerializeField] private UnitView _unitView;
-    [SerializeField] private UnitView _unitView2;
-    [SerializeField] private UnitView _unitView3;
+    [SerializeField] private EnemyView _unitView;
+    [SerializeField] private EnemyView _unitView2;
+    [SerializeField] private EnemyView _unitView3;
 
     void Start()
     {

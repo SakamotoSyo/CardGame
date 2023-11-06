@@ -12,6 +12,7 @@ public sealed class PlayerPresenter : IDisposable
     private IPlayerStatus _playerStatus;
     private PlayerView _playerView;
     private CompositeDisposable _compositeDisposable = new();
+
     public PlayerPresenter(IPlayerStatus playerStatus, PlayerView playerView)
     {
         _playerStatus = playerStatus;

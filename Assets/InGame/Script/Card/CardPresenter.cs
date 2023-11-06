@@ -10,6 +10,6 @@ public class CardPresenter : MonoBehaviour
 
     void Start()
     {
-        _cardController.CardBaseClassOb.Subscribe(value => _cardView.SetInfo(value));
+        _cardController.CardData.Subscribe(value => _cardView.SetInfo(value));
     }
 }

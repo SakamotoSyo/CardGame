@@ -10,9 +10,8 @@ using System.Threading;
 
 public class CardController : MonoBehaviour
 {
-    public CardData CardBaseClass => _cardBaseClass.Value;
-    public IObservable<CardData> CardBaseClassOb => _cardBaseClass;
-    private ReactiveProperty<CardData> _cardBaseClass = new ReactiveProperty<CardData>();
+    public IReactiveProperty<CardData> CardData => _cardData;
+    private ReactiveProperty<CardData> _cardData = new ReactiveProperty<CardData>();
     private CancellationToken _cancellationToken;
 
     private void Start()
@@ -25,11 +24,11 @@ public class CardController : MonoBehaviour
     /// </summary>
     public void ThrowCard()
     {
-        Destroy(gameObject.transform.parent.gameObject);
+        Destroy(gameObject);
     }
 
-    public void SetCardBaseClass(CardData card)
+    public void SetCardData(CardData card)
     {
-        _cardBaseClass.Value = card;
+        _cardData.Value = card;
     }
 }

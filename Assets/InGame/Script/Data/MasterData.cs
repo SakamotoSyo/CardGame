@@ -7,21 +7,15 @@ using UnityEngine.Networking;
 using System.IO;
 using UnityEngine.AddressableAssets;
 
-public sealed class MasterData
+public sealed class MasterData : IDataLoader
 {
-    public static MasterData Instance => _instance;
     public bool IsLoading { get; private set; }
-    public Dictionary<int, LoadCardData> CardData => _cardData;
-    public EffectMasterTable EffectMasterTable => _effectMasterTable;
 
-    private static MasterData _instance = new MasterData();
     [SerializeField]
     private string URL = "https://script.google.com/macros/s/AKfycbxYLJKBi81z61xp90iFhhyL9XJeM2sjpX7JYjq5Dg5ssw5p36RvJvCZn-gVgd6rqRAwOQ/exec";
     [SerializeField]
     private const string _sheetMergeSt = "?sheet=";
     private const string DataPrefix = "MasterData";
-
-    private Dictionary<int, LoadCardData> _cardData = new Dictionary<int, LoadCardData>();
     private EffectMasterTable _effectMasterTable;
 
 
@@ -35,12 +29,11 @@ public sealed class MasterData
         {
             List<UniTask> masterDataDownloads = new List<UniTask>()
             {
-               LoadMasterData<CardDataTable>("Card")
+               LoadMasterData<CardDataTable>("Card"),
+               LoadMasterData<EnemyDataTable>("EnemyData"),
             };
             await masterDataDownloads;
         }
-
-        await LoadLocalData();
     }
 
     string GetFileName(string sheetName)
@@ -52,46 +45,38 @@ public sealed class MasterData
     /// Webから読み込んでくる
     /// </summary>
     /// <returns></returns>
-    private async UniTask LoadMasterData<T>(string sheetName)
+    public async UniTask<T> LoadMasterData<T>(string sheetName)
     {
         var filename = GetFileName(sheetName);
-        IsLoading = true;
-        var url = $"{URL}{_sheetMergeSt}{sheetName}";
-        UnityWebRequest request = UnityWebRequest.Get(url);
-        await request.SendWebRequest();
-        IsLoading = false;
-        var protocol_error = request.result == UnityWebRequest.Result.ProtocolError ? true : false;
-        var connection_error = request.result == UnityWebRequest.Result.ConnectionError ? true : false;
+        T data = default;
 
-        if (protocol_error || connection_error)
+        if (Application.internetReachability != NetworkReachability.NotReachable)
         {
-            Debug.LogError(request.error);
+            IsLoading = true;
+            var url = $"{URL}{_sheetMergeSt}{sheetName}";
+            UnityWebRequest request = UnityWebRequest.Get(url);
+            await request.SendWebRequest();
+            IsLoading = false;
+            var protocol_error = request.result == UnityWebRequest.Result.ProtocolError ? true : false;
+            var connection_error = request.result == UnityWebRequest.Result.ConnectionError ? true : false;
+
+            if (protocol_error || connection_error)
+            {
+                data = await LocalData.LoadAsyncData<T>(GetFileName(sheetName));
+                Debug.LogError(request.error);
+            }
+            else
+            {
+                Debug.Log(request.downloadHandler.text);
+                data = JsonUtility.FromJson<T>(request.downloadHandler.text);
+                await LocalData.SaveAsyncData<T>(filename, data);
+            }
         }
         else
         {
-            Debug.Log(request.downloadHandler.text);
-            T data = JsonUtility.FromJson<T>(request.downloadHandler.text);
-            await LocalData.SaveAsyncData<T>(filename, data);
+            data = await LocalData.LoadAsyncData<T>(GetFileName(sheetName));
         }
-    }
 
-    /// <summary>
-    /// ローカルのデータをロードする
-    /// </summary>
-    private async UniTask LoadLocalData()
-    {
-        var cards = await LocalData.LoadAsyncData<CardDataTable>(GetFileName("Card"));
-
-        foreach (var d in cards.Data)
-        {
-            LoadCardData card = new LoadCardData();
-            card.Id = d.Id;
-            card.Name = d.Name;
-            card.Rare = d.Rare;
-            card.Discription = d.Discription;
-            card.EffectId = d.EffectId;
-            card.Cost = d.Cost;
-            _cardData.Add(d.Id, card);
-        }
+        return data;
     }
 }

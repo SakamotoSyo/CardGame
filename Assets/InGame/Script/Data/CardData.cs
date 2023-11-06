@@ -10,7 +10,7 @@ public sealed class LoadCardData
     public int Id;
     public string Name;
     public int Rare;
-    public string Discription;
+    public string Description;
     public int EffectId;
     public int Cost;
 }
@@ -34,14 +34,22 @@ public sealed class CardData
     public int Rare;
     public string Description;
     public int Cost;
-    public IEffect Effect;
+    public List<IEffect> Effect;
+
+    public void EffectExecute(CardEnviroment env)
+    {
+        for (int i = 0; i < Effect.Count; i++) 
+        {
+            Effect[i].Execute(env);
+        }
+    }
 
     public void ReflectsLoadCardData(LoadCardData data)
     {
         Id = data.Id;
         Name = data.Name;
         Rare = data.Rare;
-        Description = data.Discription;
+        Description = data.Description;
         Cost = data.Cost;
     }
 }

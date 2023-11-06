@@ -5,12 +5,14 @@ using UnityEngine;
 
 public class HandleCardEffectField : MonoBehaviour
 {
-    private IPlayerStatus _playerStatus;
+    [SerializeField]
+    private UIOutline _outline;
+    private CardEnviroment _env;
     private CardController _cardCon;
 
-    private void SetUp(IPlayerStatus playerStatus) 
+    public void SetUp(CardEnviroment env) 
     {
-        _playerStatus = playerStatus;
+        _env = env;
     }
 
     private void Update()
@@ -23,24 +25,30 @@ public class HandleCardEffectField : MonoBehaviour
         if (Input.GetMouseButtonUp(0) && _cardCon != null) 
         {
             var cardData = _cardCon.CardData.Value;
-            if (_playerStatus.UseCost(cardData.Cost)) 
+            if (_env.PlayerStatus.UseCost(cardData.Cost))
             {
-
+                _cardCon.CardData.Value.EffectExecute(_env);
+                _cardCon.ThrowCard();
+            }
+            else 
+            {
+                Debug.Log("コストが足りません");
             }
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (TryGetComponent<CardController>(out var cardController)) 
+        if (collision.TryGetComponent<CardController>(out var cardController)) 
         {
+            _outline.enabled = true;
             _cardCon = cardController;
-        }
+        }   
     }
 
-    private void OnCollisionExit2D(Collision2D collision)
+    private void OnTriggerExit2D(Collider2D collision)
     {
-        
+        _outline.enabled = false;
+        _cardCon = null;
     }
-
 }

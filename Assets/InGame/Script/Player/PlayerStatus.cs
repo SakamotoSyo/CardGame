@@ -5,28 +5,37 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using System.Linq;
 using UnityEngine.AddressableAssets;
+using VContainer;
 
 public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
 {
     public float MaxCost => _maxCost;
     private float _maxCost;
     [Tooltip("カードに使用の際に必要なコスト")]
-    public IReactiveProperty<float> Cost => _cost;
+    public IReadOnlyReactiveProperty<float> Cost => _cost;
     private readonly ReactiveProperty<float> _cost = new();
-    public IReactiveProperty<float> Gold => _gold;
+    public IReadOnlyReactiveProperty<float> Gold => _gold;
     private readonly ReactiveProperty<float> _gold = new();
 
-    public IReactiveCollection<CardData> HandCardList => _handCardList;
+    public IReadOnlyReactiveCollection<CardData> HandCardList => _handCardList;
     [Tooltip("手札のカードリスト")]
     private readonly ReactiveCollection<CardData> _handCardList = new();
 
-    public IReactiveCollection<CardData> DeckCardList => _deckCardList;
+    public IReadOnlyReactiveCollection<CardData> DeckCardList => _deckCardList;
     [Tooltip("山札のカードリスト")]
     private readonly ReactiveCollection<CardData> _deckCardList = new();
 
-    public IReactiveCollection<CardData> GraveyardCards => _graveyardCards;
+    public IReadOnlyReactiveCollection<CardData> GraveyardCards => _graveyardCards;
     [Tooltip("捨て札を貯めておくList")]
     private readonly ReactiveCollection<CardData> _graveyardCards = new();
+
+    private ICardDataRepository _cardDataRepository;
+
+    [Inject]
+    public PlayerStatus(ICardDataRepository cardDataRepository) 
+    {
+        _cardDataRepository = cardDataRepository;
+    }
 
     public async UniTask SetUp()
     {
@@ -156,12 +165,8 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         for (int i = 0; i < playerStatus.CardId.Count; i++)
         {
             //カードの読み込み
-            var loadData = MasterData.Instance.CardData[playerStatus.CardId[i]];
-            var cardData = new CardData();
-            cardData.ReflectsLoadCardData(loadData);
-            var effectData = MasterData.Instance.EffectMasterTable.FindById(playerStatus.CardId[i].ToString());
-            cardData.Effect = effectData.EffectList[0];
-            _deckCardList.Add(cardData);
+            var loadData = _cardDataRepository.FindById(playerStatus.CardId[i]);
+            _deckCardList.Add(loadData);
         }
 
     }

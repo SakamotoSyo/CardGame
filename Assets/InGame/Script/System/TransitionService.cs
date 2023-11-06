@@ -8,26 +8,20 @@ using VContainer;
 
 public sealed class TransitionService : IInitializable
 {
-    private ActorGenerator _actorGenerator;
-    private TestScript _script;
-
     [Inject]
-    public TransitionService(ActorGenerator actorGenerator, TestScript testScript)
+    public TransitionService()
     {
-        _actorGenerator = actorGenerator;
-        _script = testScript;
     }
 
     public void Initialize()
     {
-        ApplicationStart().Forget();
+
     }
 
-    private async UniTask ApplicationStart()
+    public void BattleStart()
     {
-        await MasterData.Instance.Setup();
-        Debug.Log("来ました");
-        await _actorGenerator.Setup();
-        _script.SetUp(_actorGenerator.PlayerStatus).Forget();
+        var obj = AssetLoader.AssetSynchronousLoad<GameObject>(ResourceKey.Prefabs.MainBattleScreen);
+        Object.Instantiate(obj, MainUi.MainUiTransform);
+        AssetLoader.Release(ResourceKey.Prefabs.MainBattleScreen);
     }
 }

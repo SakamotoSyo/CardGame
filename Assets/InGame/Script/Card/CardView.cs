@@ -16,7 +16,9 @@ public class CardView : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoint
     [SerializeField] Text _cardDescription;
     [SerializeField] Image _cardImage;
     [Header("カーソルを合わせたときのカードの大きさ倍率")]
-    [SerializeField] private float _cardPickSize;
+    [SerializeField] private float _cardPickMagnification;
+    [Header("カードをデフォルトの大きさ")]
+    [SerializeField] private float _cardDefaultSize;
     [SerializeField] private RectTransform _cardRectpos;
     [SerializeField] private CardController _controller;
     [Tooltip("ドローした際のAnimationのPositionを変えれる")]
@@ -58,8 +60,17 @@ public class CardView : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoint
     {
         if (!_moveFenish)
         {
-            _cardRectpos.position = eventData.position;
+           // _cardRectpos.position = eventData.position;
         }
+    }
+
+    private void OnMouseDrag()
+    {
+        Vector3 objPos = Camera.main.WorldToScreenPoint(transform.position);
+
+        Vector3 mousePos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, objPos.z);
+
+        transform.position = Camera.main.ScreenToWorldPoint(mousePos);
     }
 
     public void OnPointerDown(PointerEventData eventData)
@@ -73,6 +84,7 @@ public class CardView : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoint
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        if (_moveFenish) return;
         //クリックの終了時クリックし始めたpositionまで戻る
         DOTween.To(() => transform.localPosition,
         x => transform.localPosition = x,
@@ -89,15 +101,13 @@ public class CardView : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoint
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (_moveFenish) return;
         _cardAnimation.SelectAnim(true);
-        _cardRectpos.localScale *= _cardPickSize;
+        _cardRectpos.localScale *= _cardPickMagnification;
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        if (_moveFenish) return;
         _cardAnimation.SelectAnim(false);
-        _cardRectpos.localScale = _localScale;
+        _cardRectpos.localScale = new Vector3(_cardDefaultSize, _cardDefaultSize, _cardDefaultSize);
     }
 }

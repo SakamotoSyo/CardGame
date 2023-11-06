@@ -21,7 +21,7 @@ public sealed class PlayerView : ActorViewBase
         Addressables.Release(addressableHandle);
 
         var cardController = obj.GetComponent<CardController>();
-        cardController.SetCardBaseClass(card);
+        cardController.SetCardData(card);
 
         var cardView = obj.GetComponent<CardView>();
         _layoutGroup.AddChild(obj.transform);
