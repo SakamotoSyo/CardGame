@@ -7,9 +7,12 @@ using VContainer.Unity;
 
 public class MainBattleScrrenLifeTimeScope : LifetimeScope
 {
+    [SerializeField] private ActorGenerator _actorGenerator;
     protected override void Configure(IContainerBuilder builder)
     {
-        builder.Register<CardEnviroment>(Lifetime.Scoped);
+        builder.Register<BattleEnviroment>(Lifetime.Scoped);
+        builder.RegisterComponent(_actorGenerator);
+        builder.Register<IBattleTurnController, BattleTurnController>(Lifetime.Scoped);
         builder.Register<TestScript>(Lifetime.Scoped);
     }
 }

@@ -7,17 +7,23 @@ using Cysharp.Threading.Tasks;
 
 public class EnemyDataRepositoryMock : IEnemyDataRepository
 {
+    [VContainer.Inject]
+    public EnemyDataRepositoryMock(IEffectDataRepository effectDataRepository)
+    {
+        _effectMasterTable = effectDataRepository;
+    }
+
+    private IEffectDataRepository _effectMasterTable;
     private Dictionary<int, EnemyData> _loadEnemyData = new Dictionary<int, EnemyData>();
 
     public async UniTask LoadData(IDataLoader loader) 
     {
        var enemys = await loader.LoadMasterData<EnemyDataTable>("EnemyData");
 
-
         foreach (var d in enemys.Data)
         {
             EnemyData enemy = new EnemyData();
-            enemy.ReflectsLoadEnemyData(d);
+            enemy.ReflectsLoadEnemyData(d, _effectMasterTable);
             _loadEnemyData.Add(d.EnemyId, enemy);
         }
     }
@@ -34,7 +40,7 @@ public class EnemyDataRepositoryMock : IEnemyDataRepository
     /// <returns>出現する敵のList</returns>
     public EnemyData[] FindHierarchyManifestation(int currentHierarchy)
     {
-       return _loadEnemyData.Values.Where(x => { return x.HierarchyManifestation.Item1 < currentHierarchy
+       return _loadEnemyData.Values.Where(x => { return x.HierarchyManifestation.Item1 - 1 < currentHierarchy
                                     && currentHierarchy <  x.HierarchyManifestation.Item2; }).ToArray();
     }
 }

@@ -3,22 +3,29 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UniRx;
+using System;
+using Random = UnityEngine.Random;
 
-public class EnemyStatus
+public class EnemyStatus : StatusModelBase, IEnemyStatus
 {
-    [Tooltip("行動する回数")]
-    private string _actionNum;
-    private EnemyStatusData _enemyStatus;
-    [Tooltip("行動パターン")]
-    private List<EnemyEffectData> _effectDataList = new List<EnemyEffectData>();
-    public IReactiveCollection<EnemyEffectData> EnemyTurnEffect => _enemyTurnEffect;
+    private EnemyData _enemyStatus;
+    public IReactiveCollection<EffectMaster> EnemyTurnEffect => _enemyTurnEffect;
     [Tooltip("１ターンの間にやる行動")]
-    private ReactiveCollection<EnemyEffectData> _enemyTurnEffect = new ReactiveCollection<EnemyEffectData>();
+    private readonly ReactiveCollection<EffectMaster> _enemyTurnEffect = new ReactiveCollection<EffectMaster>();
+    public IObservable<EffectMaster> OnAttack => _onAttack;
+    private Subject<EffectMaster> _onAttack = new Subject<EffectMaster>();
+    private BattleEnviroment _env;
 
-    /// <summary>
-    /// 階層が進んだことによるStatus補正をかける
-    /// </summary>
-    /// <param name="enemy"></param>
+    private int _actionNum;
+
+    public EnemyStatus(EnemyData enemyData, BattleEnviroment env)
+    {
+        _enemyStatus = enemyData;
+        _maxHp.Value = enemyData.EnemyHp;
+        _currentHp.Value = enemyData.EnemyHp;
+        _env = env;
+    }
+
     public void StatusSet(EnemyStatusData enemy)
     {
         //_maxHp.Value = Mathf.Floor(enemy.MaxHp * EffectMagnifivationNum(enemy.BaseCurrentLevel));
@@ -36,22 +43,40 @@ public class EnemyStatus
     /// </summary>
     public void AttackDecision()
     {
-        var actionNum = 0;
-        if (_actionNum.Contains("~"))
+        for (int i = 0; i < _enemyStatus.ActionsNum; i++)
         {
-            var numArray = _actionNum.Split('~');
-            actionNum = UnityEngine.Random.Range(int.Parse(numArray[0]), int.Parse(numArray[1]) + 1);
-        }
-        else
-        {
-            actionNum = int.Parse(_actionNum);
-        }
-
-        for (int i = 0; i < actionNum; i++)
-        {
-            _enemyTurnEffect.Add(_effectDataList[UnityEngine.Random.Range(0, _effectDataList.Count)]);
+            _enemyTurnEffect.Add(_enemyStatus.EffectList[Random.Range(0, _enemyStatus.EffectList.Count)]);
         }
     }
+
+    /// <summary>
+    /// 攻撃を実行する
+    /// </summary>
+    public void AttackExecute()
+    {
+        try
+        {
+            for (int i = 0; i < _enemyTurnEffect[0].EffectList.Count; i++)
+            {
+                _enemyTurnEffect[0].EffectList[i].Execute(_env, TargetType.Player);
+            }
+        }
+        catch 
+        {
+            Debug.Log("#a");
+        }
+       
+        _onAttack.OnNext(_enemyTurnEffect[0]);
+    }
+
+    public void AttackEnd() 
+    {
+        _enemyTurnEffect.RemoveAt(0);
+        if (_enemyTurnEffect.Count == 0) return;
+        AttackExecute();
+    }
+
+   
 
     public void AttackDecisionReset()
     {
@@ -61,12 +86,7 @@ public class EnemyStatus
         }
     }
 
-    //public IStatusBase GetStatusBase()
-    //{
-    //    return this;
-    //}
-
-    public IReactiveCollection<EnemyEffectData> GetEnemyTurnEffectOb()
+    public IReactiveCollection<EffectMaster> GetEnemyTurnEffectOb()
     {
         return _enemyTurnEffect;
     }
@@ -82,7 +102,7 @@ public class EnemyStatus
         //return 1 + ((GameManager.CurremtLevel + 1) - BaseLevel) * DataBaseScript.EFFECT_MAGNIFICATION;
     }
 
-    public ReactiveCollection<EnemyEffectData> GetEnemyTurnEffect()
+    public ReactiveCollection<EffectMaster> GetEnemyTurnEffect()
     {
         return _enemyTurnEffect;
     }

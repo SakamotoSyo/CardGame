@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using DG.Tweening;
+using Cysharp.Threading.Tasks;
 
 public class CardView : MonoBehaviour, IDragHandler, IPointerDownHandler, IPointerUpHandler, IPointerEnterHandler, IPointerExitHandler
 {
@@ -20,9 +21,9 @@ public class CardView : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoint
     [Header("カードをデフォルトの大きさ")]
     [SerializeField] private float _cardDefaultSize;
     [SerializeField] private RectTransform _cardRectpos;
-    [SerializeField] private CardController _controller;
     [Tooltip("ドローした際のAnimationのPositionを変えれる")]
     [SerializeField] private Vector3 _drawAnimOffSet;
+    [SerializeField] private GameObject _cardEffectActivated;
 
     private bool _moveFenish = true;
     private Vector3 _localScale;
@@ -33,34 +34,49 @@ public class CardView : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoint
     /// Modelに情報が入ったらPresenterを通して呼ばれる関数
     /// </summary>
     /// <param name="card">カードの情報</param>
-    public void SetInfo(CardData card)
+    public async UniTask SetInfo(CardData card)
     {
-        if (card == null) return;
-        _cardCost.text = card.Cost.ToString();
-        _cardName.text = card.Name;
-        //_cardImage.sprite = card.CardSprite;
-        _cardDescription.text = card.Description;
-
+        if (card != null)
+        {
+            _cardCost.text = card.Cost.ToString();
+            _cardName.text = card.Name;
+            //_cardImage.sprite = card.CardSprite;
+            _cardDescription.text = card.Description;
+        }
+        else
+        {
+            await _cardAnimation.ThrowAnim(transform, this.GetCancellationTokenOnDestroy());
+            Destroy(gameObject);
+        }
     }
 
-    public void DrawAnim(Transform transform)
+    public void DrawAnim()
     {
         DOTween.To(() => transform.localPosition - _drawAnimOffSet,
-           x => transform.localPosition = x,
-           transform.localPosition, 0.5f)
-          .OnStart(() => _moveFenish = true)
-          .OnComplete(() => 
-          {
+            x => transform.localPosition = x,
+            transform.localPosition, 0.5f)
+           .OnStart(() => _moveFenish = true)
+           .SetLink(gameObject)
+           .OnComplete(() =>
+           {
               _localScale = _cardRectpos.localScale;
               _moveFenish = false;
-          } );
+           });
+    }
+
+    public void EffectActivated()
+    {
+        Instantiate(_cardEffectActivated, 
+             transform.position, 
+             transform.rotation);
+        Destroy(gameObject);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
         if (!_moveFenish)
         {
-           // _cardRectpos.position = eventData.position;
+            // _cardRectpos.position = eventData.position;
         }
     }
 
@@ -97,7 +113,6 @@ public class CardView : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoint
             _moveFenish = false;
         });
     }
-
 
     public void OnPointerEnter(PointerEventData eventData)
     {

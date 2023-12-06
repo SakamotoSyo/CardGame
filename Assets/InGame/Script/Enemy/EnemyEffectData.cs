@@ -10,15 +10,15 @@ public class EnemyEffectData
     [SubclassSelector, SerializeReference]
     private IEffect _enemyEffect;
 
-    public TargetType Target => _targetType;
-    [SerializeField] private TargetType _targetType;
+    public AttackTargetRangeType Target => _targetType;
+    [SerializeField] private AttackTargetRangeType _targetType;
 
-    public EnemyEffectImageType ImageType => _imageType;
-    [SerializeField] private EnemyEffectImageType _imageType;
+    public EffectType ImageType => _imageType;
+    [SerializeField] private EffectType _imageType;
 
     public float EffectPower => _effectPower;
     [SerializeField] private float _effectPower;
-    public EnemyEffectData(IEffect effect, TargetType target, EnemyEffectImageType image, float power)
+    public EnemyEffectData(IEffect effect, AttackTargetRangeType target, EffectType image, float power)
     {
         _enemyEffect = effect;
         _targetType = target;

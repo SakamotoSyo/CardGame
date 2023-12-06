@@ -5,13 +5,13 @@ using UnityEngine;
 
 public class ScreenBase : MonoBehaviour, IScreenLifeTimeCycle
 {
-    public virtual void Pop()
+    public virtual void PopExit()
     {
-
+        
     }
 
-    public virtual void Push()
+    public virtual void PushEnter()
     {
-
+        
     }
 }

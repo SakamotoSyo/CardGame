@@ -9,13 +9,5 @@ public class UnitSetView : MonoBehaviour
     [SerializeField] private EnemyView _unitView2;
     [SerializeField] private EnemyView _unitView3;
 
-    void Start()
-    {
-        
-    }
 
-    void Update()
-    {
-        
-    }
 }

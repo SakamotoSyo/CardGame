@@ -238,7 +238,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4693510572096026422}
-  - component: {fileID: 7991206986301321065}
+  - component: {fileID: 6462953039097913723}
   m_Layer: 0
   m_Name: CardSpawnpos
   m_TagString: Untagged
@@ -265,7 +265,7 @@ RectTransform:
   m_AnchoredPosition: {x: -469, y: -385}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &7991206986301321065
+--- !u!114 &6462953039097913723
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -274,10 +274,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 4693510572096026421}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 51345c5e4c3f77043965587d01fd622c, type: 3}
+  m_Script: {fileID: 11500000, guid: 8a8695521f0d02e499659fee002a26c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _spacing: {x: 200, y: 0}
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_StartCorner: 0
+  m_StartAxis: 1
+  m_CellSize: {x: 100, y: 100}
+  m_Spacing: {x: 120, y: 0}
+  m_Constraint: 0
+  m_ConstraintCount: 2
 --- !u!1 &7408541221066456345
 GameObject:
   m_ObjectHideFlags: 0

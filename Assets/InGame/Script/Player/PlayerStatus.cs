@@ -97,7 +97,13 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         {
             _graveyardCards.Add(_handCardList[i]);
         }
-        _handCardList.Clear();
+
+        var count = _handCardList.Count;
+        for (int i = 0; i < count; i++) 
+        {
+            _handCardList.RemoveAt(0);
+        }
+        
     }
 
     /// <summary>

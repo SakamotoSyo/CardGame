@@ -36,11 +36,11 @@ public sealed class CardData
     public int Cost;
     public List<IEffect> Effect;
 
-    public void EffectExecute(CardEnviroment env)
+    public void EffectExecute(BattleEnviroment env, TargetType targetType)
     {
         for (int i = 0; i < Effect.Count; i++) 
         {
-            Effect[i].Execute(env);
+            Effect[i].Execute(env, targetType);
         }
     }
 

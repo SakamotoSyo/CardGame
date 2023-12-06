@@ -24,11 +24,16 @@ public class CardController : MonoBehaviour
     /// </summary>
     public void ThrowCard()
     {
-        Destroy(gameObject);
+        _cardData.Value = null;
     }
 
     public void SetCardData(CardData card)
     {
         _cardData.Value = card;
+    }
+
+    private void OnDestroy()
+    {
+        _cardData?.Dispose();
     }
 }

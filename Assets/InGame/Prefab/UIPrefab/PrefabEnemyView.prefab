@@ -34,7 +34,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -65.3, y: 141}
+  m_AnchoredPosition: {x: -21.3, y: 141}
   m_SizeDelta: {x: 29.41, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5792664643736920250
@@ -72,7 +72,7 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 6
     m_MaxSize: 154
-    m_Alignment: 3
+    m_Alignment: 5
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 1
@@ -157,7 +157,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: 60
+  m_Text: 0
 --- !u!1 &4622125672279188584
 GameObject:
   m_ObjectHideFlags: 0
@@ -169,6 +169,7 @@ GameObject:
   - component: {fileID: 433039818528833620}
   - component: {fileID: 5006076807530810870}
   - component: {fileID: 5917328951170427171}
+  - component: {fileID: 5436535956946136356}
   m_Layer: 5
   m_Name: NextAttackIConImage
   m_TagString: Untagged
@@ -210,7 +211,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4622125672279188584}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -233,6 +234,32 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &5436535956946136356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4622125672279188584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
+  m_ChildControlWidth: 1
+  m_ChildControlHeight: 1
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &5976263635286101378
 GameObject:
   m_ObjectHideFlags: 0
@@ -284,7 +311,7 @@ GameObject:
   - component: {fileID: 3861197781095965417}
   - component: {fileID: 3442726447012583960}
   m_Layer: 5
-  m_Name: Enemy
+  m_Name: PrefabEnemyView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -361,6 +388,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54da3d507832f3a4ea0e436d7eff143e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _defenceObj: {fileID: 0}
+  _rectCurrent: {fileID: 0}
+  _hpImage: {fileID: 0}
+  _hpOutLineImage: {fileID: 0}
+  _hpDefaultColor: {r: 0, g: 0, b: 0, a: 0}
+  _hpOutLineDefaultColor: {r: 0, g: 0, b: 0, a: 0}
+  _hpDefenceColor: {r: 0, g: 0, b: 0, a: 0}
+  _hpOutLineDefenceColor: {r: 0, g: 0, b: 0, a: 0}
+  _maxHpText: {fileID: 7600004519158782322}
+  _currentHpText: {fileID: 3407155257720569866}
+  _defenceText: {fileID: 0}
+  _damageEffectText: {fileID: 0}
+  _damageEffectAnim: {fileID: 0}
+  _charactorImage: {fileID: 3861197781095965417}
+  _attackImageData:
+  - EffectType: 0
+    Sprite: {fileID: 21300000, guid: bd9342f3a5b68a44692319700281e022, type: 3}
+  - EffectType: 1
+    Sprite: {fileID: 21300000, guid: ee1e7a4d7b8636646b313e322c305c2b, type: 3}
+  - EffectType: 2
+    Sprite: {fileID: 21300000, guid: cf17afe740153ad4a878e65067e07ceb, type: 3}
+  _attackIconInsPos: {fileID: 433039818528833620}
+  _attackIconPrefab: {fileID: 6548481179702968623, guid: 528a906717c2bc64cab5f0cce1c3f8a2, type: 3}
 --- !u!1 &9213550836177069923
 GameObject:
   m_ObjectHideFlags: 0

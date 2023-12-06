@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UniRx;
+using Cysharp.Threading.Tasks;
 
 public class CardPresenter : MonoBehaviour
 {
@@ -10,6 +11,6 @@ public class CardPresenter : MonoBehaviour
 
     void Start()
     {
-        _cardController.CardData.Subscribe(value => _cardView.SetInfo(value));
+        _cardController.CardData.Subscribe(value => _cardView.SetInfo(value).Forget());
     }
 }

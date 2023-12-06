@@ -30,6 +30,5 @@ public sealed class ApplicationCompositionRoot : LifetimeScope
         builder.RegisterComponent(_mainUi);
 
         builder.RegisterEntryPoint<EntryPoint>(Lifetime.Singleton);
-
     }
 }

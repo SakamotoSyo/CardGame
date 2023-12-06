@@ -3,9 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface IScreenLifeTimeCycle
+public enum AttackTargetRangeType
 {
-    public void Push();
-
-    public void Pop();
+    //一体
+    One,
+    //全体
+    All,
 }

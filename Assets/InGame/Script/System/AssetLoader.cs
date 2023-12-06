@@ -19,18 +19,37 @@ public class AssetLoader : MonoBehaviour
     /// <typeparam name="T"></typeparam>
     /// <param name="address"></param>
     /// <returns></returns>
-    public static T AssetSynchronousLoad<T>(string address)
-    {
-        AsyncOperationHandle<T> addressableHandle = Addressables.LoadAssetAsync<T>(address);
-        _handles.Add(address, addressableHandle);
-        var result = addressableHandle.WaitForCompletion();
-        return result;
-    }
+    //public static T AssetSynchronousLoad<T>(string address)
+    //{
+    //    AsyncOperationHandle<T> addressableHandle = default;
+    //    T result = default;
+    //    if (!_handles.ContainsKey(address))
+    //    {
+    //        addressableHandle = Addressables.LoadAssetAsync<T>(address);
+    //        _handles.Add(address, addressableHandle);
+    //        result = addressableHandle.WaitForCompletion();
+    //    }
+    //    else 
+    //    {
+    //        result = (T)_handles[address].WaitForCompletion();
+    //    }
+
+    //    UniTask.Yield(PlayerLoopTiming.Update);
+    //    return result;
+    //}
 
     public static async UniTask<T> LoadAssetAsync<T>(string address) 
     {
-        AsyncOperationHandle<T> addressableHandle = Addressables.LoadAssetAsync<T>(address);
-        _handles.Add(address, addressableHandle);
+        AsyncOperationHandle<T> addressableHandle = default;
+        if (!_handles.ContainsKey(address))
+        {
+            addressableHandle = Addressables.LoadAssetAsync<T>(address);
+            _handles.Add(address, addressableHandle);
+        }
+        else 
+        {
+            return (T)_handles[address].Result;
+        }
         await addressableHandle.Task;
         return addressableHandle.Result;
     }

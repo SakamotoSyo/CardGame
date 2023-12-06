@@ -28,7 +28,6 @@ public class CardDataRepository : ICardDataRepository
             card.Name = d.Name;
             card.Rare = d.Rare;
             card.Description = d.Description;
-            Debug.Log(_effectMasterTable.EffectTable);
             card.Effect = _effectMasterTable.EffectTable.FindById(d.EffectId.ToString()).EffectList;
             card.Cost = d.Cost;
             _cardData.Add(d.Id, card);

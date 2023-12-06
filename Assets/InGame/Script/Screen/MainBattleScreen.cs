@@ -4,21 +4,24 @@ using System.Collections.Generic;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using VContainer;
+using UnityEngine.UI;
 
-public class MainBattleScreen : MonoBehaviour
+public class MainBattleScreen : ScreenBase
 {
     [SerializeField] private HandleCardEffectField _handleCardEffectField;
     [SerializeField] private ActorGenerator _actorGenerator;
+    [SerializeField] private Text _currentTurnText;
 
     private TestScript _testScript = default;
-    private CardEnviroment _cardEnv = default;
+    private BattleEnviroment _cardEnv = default;
+    private IBattleTurnController _battleTurnController;
 
     [Inject]
-    public void Construct(CardEnviroment cardEnviroment, TestScript testScript) 
+    public void Construct(BattleEnviroment cardEnviroment, IBattleTurnController battleController, TestScript testScript) 
     {
-        Debug.Log(cardEnviroment);
         _cardEnv = cardEnviroment;
         _testScript = testScript;
+        _battleTurnController = battleController;
     }
 
     private void Start() 
@@ -29,12 +32,18 @@ public class MainBattleScreen : MonoBehaviour
     public async UniTask SetUp() 
     {
         await _actorGenerator.Setup();
-        await _testScript.SetUp();
+        await _battleTurnController.Setup();
         _handleCardEffectField.SetUp(_cardEnv);
+    }
+
+    public void BindView() 
+    {
+        
     }
 
     void Update()
     {
-        
+        //if (_battleTurnController == null && _battleTurnController.CurrentState == null) return;
+        //_currentTurnText.text = _battleTurnController.CurrentState.ToString();
     }
 }

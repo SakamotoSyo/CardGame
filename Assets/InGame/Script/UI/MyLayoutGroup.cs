@@ -14,4 +14,9 @@ public class MyLayoutGroup : MonoBehaviour
                                           transform.position.y + (_spacing.y * _childCount));
         _childCount++;
     }
+
+    public void RemoveChild() 
+    {
+        _childCount--;
+    }
 }

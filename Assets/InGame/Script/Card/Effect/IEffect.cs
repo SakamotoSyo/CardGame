@@ -5,5 +5,7 @@ using UnityEngine;
 
 public interface IEffect
 {
-    public void Execute(CardEnviroment env);
+    public EffectType EffectType { get;} 
+    public float Power { get;}
+    public void Execute(BattleEnviroment env, TargetType targetType);
 }

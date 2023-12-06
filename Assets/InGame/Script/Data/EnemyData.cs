@@ -8,13 +8,22 @@ public class EnemyData
     public int EnemyId;
     public string EnemyName;
     public (int, int) HierarchyManifestation;
+    public int EnemyHp;
+    public List<EffectMaster> EffectList = new List<EffectMaster>();
+    public int ActionsNum;
 
-    public void ReflectsLoadEnemyData(LoadEnemyData data)
+    public void ReflectsLoadEnemyData(LoadEnemyData data, IEffectDataRepository effectData)
     {
         EnemyId = data.EnemyId;
         EnemyName = data.EnemyName;
-       // var hierarchyManifestation = Array.ConvertAll(data.HierarchyManifestation.Split(','), int.Parse);
-        //HierarchyManifestation = Tuple.Create(item1: hierarchyManifestation[0], item2: hierarchyManifestation[1]).ToValueTuple();
+        HierarchyManifestation = (data.BeginningHierarchy, data.EndHierarchy);
+        EnemyHp = data.EnemyHp;
+        var effectNum = data.EffectList.Split(',');
+        for (int i = 0; i < effectNum.Length; i++) 
+        {
+            EffectList.Add(effectData.EffectTable.FindById(effectNum[i]));
+        }
+        ActionsNum = data.ActionsNum;
     }
 }
 
@@ -29,5 +38,9 @@ public class LoadEnemyData
 {
     public int EnemyId;
     public string EnemyName;
-    public string HierarchyManifestation;
+    public int BeginningHierarchy;
+    public int EndHierarchy;
+    public int EnemyHp;
+    public string EffectList;
+    public int ActionsNum;
 }

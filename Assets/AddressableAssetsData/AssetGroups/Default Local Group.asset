@@ -17,18 +17,13 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: a7e4482b6bc4de743a2d24d698af5732
   m_SerializeEntries:
-  - m_GUID: 2aaf75b28cdffe0408590b5530de6f25
-    m_Address: Assets/InGame/Image/Stage
-    m_ReadOnly: 0
-    m_SerializedLabels: []
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ffc6dd47c74e7584caaecbd7574f2ec5
     m_Address: MasterData
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 7ee476d081c5f914599324c4d07259ff
-    m_Address: ScreenPrefab
+  - m_GUID: 6968744f57e847c4b9b8b97331e17510
+    m_Address: AnimPrefab
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

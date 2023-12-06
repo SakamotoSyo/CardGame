@@ -12,9 +12,9 @@ public abstract class StatusModelBase : DisposeState
     public IReactiveProperty<float> CurrentHp => _currentHp;
     protected readonly ReactiveProperty<float> _currentHp = new();
 
-    public IReactiveProperty<float> Attack => _attack;
+    public IReactiveProperty<float> AttackNum => _attack;
     protected readonly ReactiveProperty<float> _attack = new();
-    public IReactiveProperty<float> Defence => _defence;
+    public IReactiveProperty<float> DefenceNum => _defence;
     protected readonly ReactiveProperty<float> _defence = new();
 
     #region Set関数

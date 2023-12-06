@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 using UnityEngine.AddressableAssets;
 
 public sealed class PlayerView : ActorViewBase
@@ -11,22 +12,48 @@ public sealed class PlayerView : ActorViewBase
     [SerializeField] private GameObject _cardParentObj;
     [SerializeField] private Animator _costEffectAnim;
     [SerializeField] private Text _costEffectText;
-    [SerializeField] private MyLayoutGroup _layoutGroup;
+    [SerializeField] private Button _turnEndButton;
+    [SerializeField] private GridLayoutGroup _layoutGroup;
+
+    private List<CardController> _handController = new();
+    private GameObject _cardPrefab;
+    private IBattleTurnController _battleTurnController;
+
+    public async UniTask SetUp(IBattleTurnController battleTurnController) 
+    {
+        _cardPrefab = await AssetLoader.LoadAssetAsync<GameObject>(ResourceKey.Prefabs.Card);
+        _battleTurnController = battleTurnController;
+        _turnEndButton.onClick.AddListener(NextTurn);
+    }
 
     public void DrawView(CardData card)
     {
-        var addressableHandle = Addressables.LoadAssetAsync<GameObject>(ResourceKey.Prefabs.Card);
-        var cardPrefab = addressableHandle.WaitForCompletion();
-        var obj = Instantiate(cardPrefab, _cardParentObj.transform.position, Quaternion.identity, _cardParentObj.transform);
-        Addressables.Release(addressableHandle);
-
+        var obj = Instantiate(_cardPrefab, _cardParentObj.transform);
         var cardController = obj.GetComponent<CardController>();
+        _handController.Add(cardController);
         cardController.SetCardData(card);
 
+        _layoutGroup.CalculateLayoutInputVertical();
+        _layoutGroup.CalculateLayoutInputHorizontal();
+        _layoutGroup.SetLayoutHorizontal();
+        _layoutGroup.SetLayoutVertical();
         var cardView = obj.GetComponent<CardView>();
-        _layoutGroup.AddChild(obj.transform);
-        cardView.DrawAnim(obj.transform);
+        cardView.DrawAnim();
     }
+
+    public void ThrowHandCard(CardData cardData) 
+    {
+        for (int i = 0; i < _handController.Count; i++) 
+        {
+            if (_handController[i].CardData.Value == cardData) 
+            {
+                _handController[i].ThrowCard();
+                _handController.Remove(_handController[i]);
+                break;
+            }
+        }
+    }
+
     public void GraveyardCardsView(int count)
     {
         _discardedText.text = count.ToString();
@@ -54,5 +81,10 @@ public sealed class PlayerView : ActorViewBase
         {
             _costText.text = cost.ToString();
         }
+    }
+
+    private void NextTurn() 
+    {
+        _battleTurnController.ChangeState(BattleTurnController.TurnStateType.SelectNextActorTransitionState);
     }
 }

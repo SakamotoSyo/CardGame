@@ -8,6 +8,8 @@ using VContainer;
 
 public sealed class TransitionService : IInitializable
 {
+    private ScreenContainer _mainContainer => ScreenContainer.Find("MainContainer");
+
     [Inject]
     public TransitionService()
     {
@@ -18,10 +20,15 @@ public sealed class TransitionService : IInitializable
 
     }
 
-    public void BattleStart()
+    public async UniTask BattleStart()
     {
-        var obj = AssetLoader.AssetSynchronousLoad<GameObject>(ResourceKey.Prefabs.MainBattleScreen);
-        Object.Instantiate(obj, MainUi.MainUiTransform);
-        AssetLoader.Release(ResourceKey.Prefabs.MainBattleScreen);
+        _mainContainer.Pop(1);
+        await _mainContainer.Push(ResourceKey.Prefabs.MainBattleScreen);
+        //var obj = AssetLoader.AssetSynchronousLoad<GameObject>();
+    }
+
+    public async UniTask TitleScreen() 
+    {
+        await _mainContainer.Push(ResourceKey.Prefabs.TitleScreen);
     }
 }

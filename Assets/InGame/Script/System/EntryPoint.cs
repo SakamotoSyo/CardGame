@@ -11,14 +11,13 @@ using UnityEngine.AddressableAssets;
 public class EntryPoint : IAsyncStartable
 {
     private MainUi _mainUi;
-    private ActorGenerator _actorGenerator;
     private TransitionService _transitionService;
     private IEnemyDataRepository _enemyDataRepository;
     private ICardDataRepository _cardDataRepository;
     private IEffectDataRepository _effectDataRepository;
     private IDataLoader _dataLoader;
 
-    public EntryPoint(MainUi mainUi, ActorGenerator actorGenerator,
+    public EntryPoint(MainUi mainUi,
                       IEnemyDataRepository enemyDataRepository,
                       ICardDataRepository cardDataRepository,
                       IEffectDataRepository effectDataRepository,
@@ -26,7 +25,6 @@ public class EntryPoint : IAsyncStartable
                       TransitionService transitionService)
     {
         _mainUi = mainUi;
-        _actorGenerator = actorGenerator;
         _dataLoader = dataLoader;
         _enemyDataRepository = enemyDataRepository;
         _cardDataRepository = cardDataRepository;
@@ -39,16 +37,16 @@ public class EntryPoint : IAsyncStartable
         Application.targetFrameRate = 60;
         await LoadData();
         _mainUi.SetUp();
-        _transitionService.BattleStart();
+        await _transitionService.TitleScreen();
     }
 
     private async UniTask LoadData()
     {
+        await _effectDataRepository.LoadData(_dataLoader);
         List<UniTask> masterDataDownloads = new List<UniTask>()
         {
-            _effectDataRepository.LoadData(_dataLoader),
-            _cardDataRepository.LoadData(_dataLoader),
-            _enemyDataRepository.LoadData(_dataLoader),
+           _enemyDataRepository.LoadData(_dataLoader),
+           _cardDataRepository.LoadData(_dataLoader),
         };
 
         await masterDataDownloads;

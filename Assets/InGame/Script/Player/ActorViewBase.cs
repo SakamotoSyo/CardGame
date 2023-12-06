@@ -41,6 +41,7 @@ public abstract class ActorViewBase : MonoBehaviour
 
     public virtual void SetHpCurrent(float currentHp)
     {
+        Debug.Log(currentHp);
         if (int.Parse(_currentHpText.text) > 0)
         {
             //DamageEffectUI(currentHp).Forget();

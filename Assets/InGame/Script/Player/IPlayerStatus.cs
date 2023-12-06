@@ -9,10 +9,10 @@ public interface IPlayerStatus
 {
     public IReadOnlyReactiveProperty<float> Cost { get;}
     public IReadOnlyReactiveProperty<float> Gold { get;}
-    public IReactiveProperty<float> Defence { get; }
+    public IReactiveProperty<float> DefenceNum { get; }
     public IReactiveProperty<float> MaxHp { get; }
     public IReactiveProperty<float> CurrentHp { get; }
-    public IReactiveProperty<float> Attack { get; }
+    public IReactiveProperty<float> AttackNum { get; }
     public IReadOnlyReactiveCollection<CardData> HandCardList { get; }
     public IReadOnlyReactiveCollection<CardData> DeckCardList { get; }
     public IReadOnlyReactiveCollection<CardData> GraveyardCards { get; }
@@ -21,4 +21,6 @@ public interface IPlayerStatus
 
     public void DrawCard(float num);
     public bool UseCost(float num);
+    public void ResetCost();
+    public void DiscardAllHandCards();
 }
