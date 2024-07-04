@@ -5,9 +5,10 @@ using UnityEngine;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 
-public class TitleScreen : MonoBehaviour, IScreenLifeTimeCycle
+public class TitleScreen : ScreenBase
 {
-    [SerializeField] private Button _titleButton; 
+    [SerializeField] private Button _titleButton;
+    [SerializeField] private Button _testButton;
     private TransitionService _transitionService;
 
     [VContainer.Inject]
@@ -20,7 +21,13 @@ public class TitleScreen : MonoBehaviour, IScreenLifeTimeCycle
     {
         _titleButton.onClick.AddListener(() =>
         {
-            _transitionService.BattleStart().Forget();
+            //_transitionService.BattleStart().Forget();
+            _transitionService.MapSelectScreen().Forget();
+        });
+
+        _testButton.onClick.AddListener(() =>
+        {
+            _transitionService.TestScreen().Forget();
         });
     }
     public void PopExit()

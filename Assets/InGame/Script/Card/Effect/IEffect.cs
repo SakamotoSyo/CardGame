@@ -6,6 +6,6 @@ using UnityEngine;
 public interface IEffect
 {
     public EffectType EffectType { get;} 
-    public float Power { get;}
+    public float EffectPower { get; set; }
     public void Execute(BattleEnviroment env, TargetType targetType);
 }

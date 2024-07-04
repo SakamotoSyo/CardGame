@@ -12,6 +12,7 @@ using VContainer;
 public sealed class ApplicationCompositionRoot : LifetimeScope
 {
     [SerializeField] private MainUi _mainUi;
+    [SerializeField] private FadeScript _fadeScript;
     protected override void Configure(IContainerBuilder builder)
     {
         builder.Register<IDataLoader, MasterData>(Lifetime.Singleton);
@@ -28,6 +29,7 @@ public sealed class ApplicationCompositionRoot : LifetimeScope
         builder.Register<TransitionService>(Lifetime.Singleton);
 
         builder.RegisterComponent(_mainUi);
+       // builder.RegisterComponent(_fadeScript);
 
         builder.RegisterEntryPoint<EntryPoint>(Lifetime.Singleton);
     }

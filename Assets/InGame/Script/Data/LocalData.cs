@@ -9,6 +9,11 @@ using System.Linq;
 public class LocalData
 {
 
+    public static bool GetFileExists(string file, string path = null) 
+    {
+        return File.Exists(path + "/" + file);
+    }
+
     /// <summary>
     /// ファイルをロードする
     /// </summary>

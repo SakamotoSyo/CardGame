@@ -12,15 +12,13 @@ public class MainBattleScreen : ScreenBase
     [SerializeField] private ActorGenerator _actorGenerator;
     [SerializeField] private Text _currentTurnText;
 
-    private TestScript _testScript = default;
     private BattleEnviroment _cardEnv = default;
     private IBattleTurnController _battleTurnController;
 
     [Inject]
-    public void Construct(BattleEnviroment cardEnviroment, IBattleTurnController battleController, TestScript testScript) 
+    public void Construct(BattleEnviroment cardEnviroment, IBattleTurnController battleController) 
     {
         _cardEnv = cardEnviroment;
-        _testScript = testScript;
         _battleTurnController = battleController;
     }
 

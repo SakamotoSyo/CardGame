@@ -17,7 +17,7 @@ public class EffectMaster
         var sum = 0f;
         for (int i = 0; i < EffectList.Count; i++) 
         {
-            sum += EffectList[i].Power;
+            sum += EffectList[i].EffectPower;
         }
         return sum;
     }

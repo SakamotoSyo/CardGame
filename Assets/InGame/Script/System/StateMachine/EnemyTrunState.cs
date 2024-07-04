@@ -10,6 +10,7 @@ public class EnemyTurnState : State
 {
     protected override async UniTask OnEnterAsync(State currentState, CancellationToken token)
     {
+        await Owner.BattleStateView.TrunAnimAsync(this);
         for (int i = 0; i < Owner.OrderOfAction.Count; i++) 
         {
             Owner.OrderOfAction[i].EnemyStatus.AttackExecute();

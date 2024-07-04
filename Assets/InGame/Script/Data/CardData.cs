@@ -13,6 +13,7 @@ public sealed class LoadCardData
     public string Description;
     public int EffectId;
     public int Cost;
+    public string EffectPower;
 }
 
 [Serializable]

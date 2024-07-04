@@ -15,10 +15,12 @@ public static class ResourceKey
 
         public const string PlayerView = UiFolder + "/" + Prefix + "PlayerView.prefab";
         public const string EnemyView = UiFolder + "/" + Prefix + "EnemyView.prefab";
-        public const string Card = UiFolder + "/" + Prefix + "Card.prefab";
+        public const string BattleCard = UiFolder + "/" + Prefix + "BattleCard.prefab";
         public const string CardField = UiFolder + "/" + Prefix + "CardField.prefab";
         public const string MainBattleScreen = Screen + "/" + Prefix + "BattleMainScreen.prefab";
         public const string TitleScreen = Screen + "/" + Prefix + "TitleScreen.prefab";
+        public const string MapSelectScreen = Screen + "/" + Prefix + "MapSelectScreen.prefab";
+        public const string DeckBuildScreen = Screen + "/" + Prefix + "DeckBuildScreen.prefab";
         public const string StateTrun = AnimFolder + "/" + Prefix + "StateTurn.prefab";
     }
 
@@ -32,6 +34,7 @@ public static class ResourceKey
         private const string Prefix = "MasterData";
         public const string PlayerInitStatus = Prefix + "/" + PlayerFolder + "/" + "InitialStatus.asset";
         public const string EffectMasterTableAsset = Prefix + "/" + "EffectMasterTableAsset.asset";
+        public const string GenerateMapData = Prefix + "/" + "GenerateMapData.asset";
     }
 
 

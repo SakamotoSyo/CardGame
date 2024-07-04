@@ -21,7 +21,7 @@ public sealed class PlayerView : ActorViewBase
 
     public async UniTask SetUp(IBattleTurnController battleTurnController) 
     {
-        _cardPrefab = await AssetLoader.LoadAssetAsync<GameObject>(ResourceKey.Prefabs.Card);
+        _cardPrefab = await AssetLoader.LoadAssetAsync<GameObject>(ResourceKey.Prefabs.BattleCard);
         _battleTurnController = battleTurnController;
         _turnEndButton.onClick.AddListener(NextTurn);
     }
@@ -66,10 +66,10 @@ public sealed class PlayerView : ActorViewBase
 
     public async UniTask SetCostText(float cost)
     {
+        var token = this.GetCancellationTokenOnDestroy();
         _costText.text = cost.ToString();
         if (int.Parse(_costText.text) < cost)
         {
-            var token = this.GetCancellationTokenOnDestroy();
             _costEffectText.enabled = true;
             _costEffectText.text = (cost - int.Parse(_costText.text)).ToString("0");
             _costText.text = cost.ToString();
@@ -85,6 +85,9 @@ public sealed class PlayerView : ActorViewBase
 
     private void NextTurn() 
     {
-        _battleTurnController.ChangeState(BattleTurnController.TurnStateType.SelectNextActorTransitionState);
+        if (_battleTurnController.CurrentState.ToString() == "PlayerTurnState") 
+        {
+            _battleTurnController.ChangeState(BattleTurnController.TurnStateType.SelectNextActorTransitionState);
+        }
     }
 }

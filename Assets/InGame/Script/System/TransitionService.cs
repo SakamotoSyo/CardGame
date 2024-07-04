@@ -22,7 +22,7 @@ public sealed class TransitionService : IInitializable
 
     public async UniTask BattleStart()
     {
-        _mainContainer.Pop(1);
+        await _mainContainer.Pop(1);
         await _mainContainer.Push(ResourceKey.Prefabs.MainBattleScreen);
         //var obj = AssetLoader.AssetSynchronousLoad<GameObject>();
     }
@@ -30,5 +30,17 @@ public sealed class TransitionService : IInitializable
     public async UniTask TitleScreen() 
     {
         await _mainContainer.Push(ResourceKey.Prefabs.TitleScreen);
+    }
+
+    public async UniTask MapSelectScreen() 
+    {
+        await _mainContainer.Pop(1);
+        await _mainContainer.Push(ResourceKey.Prefabs.MapSelectScreen);
+    }
+
+    public async UniTask TestScreen() 
+    {
+        await _mainContainer.Pop(1);
+        await _mainContainer.Push(ResourceKey.Prefabs.DeckBuildScreen);
     }
 }

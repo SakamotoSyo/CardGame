@@ -11,6 +11,6 @@ public class CardPresenter : MonoBehaviour
 
     void Start()
     {
-        _cardController.CardData.Subscribe(value => _cardView.SetInfo(value).Forget());
+        _cardController.CardData.Subscribe(value => _cardView.SetInfo(value).Forget()).AddTo(this);
     }
 }

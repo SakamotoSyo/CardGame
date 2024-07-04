@@ -19,6 +19,7 @@ public abstract class ActorViewBase : MonoBehaviour
     #endregion
     [SerializeField] private Text _maxHpText;
     [SerializeField] private Text _currentHpText;
+    [SerializeField] private Animator _defenceEffectAnim;
     [SerializeField] private Text _defenceText;
     [SerializeField] private Text _damageEffectText;
     [SerializeField] private Animator _damageEffectAnim;
@@ -44,7 +45,7 @@ public abstract class ActorViewBase : MonoBehaviour
         Debug.Log(currentHp);
         if (int.Parse(_currentHpText.text) > 0)
         {
-            //DamageEffectUI(currentHp).Forget();
+            DamageEffectUI(currentHp).Forget();
         }
         //バーの長さを更新
         //_rectCurrent.SetWidth(GetWidth(currentHp));
@@ -57,19 +58,20 @@ public abstract class ActorViewBase : MonoBehaviour
     /// <param name="num"></param>
     public virtual void SetDefense(float num)
     {
-        return;
         if (0 < num)
         {
             _defenceObj.SetActive(true);
             _defenceText.text = num.ToString("0");
-            _hpImage.color = _hpDefenceColor;
-            _hpOutLineImage.color = _hpOutLineDefenceColor;
+            _defenceEffectAnim.SetTrigger("Active");
+            //_hpImage.color = _hpDefenceColor;
+            //_hpOutLineImage.color = _hpOutLineDefenceColor;
         }
         else
         {
             _defenceObj.SetActive(false);
-            _hpImage.color = _hpDefaultColor;
-            _hpOutLineImage.color = _hpOutLineDefaultColor;
+            _defenceEffectAnim.SetTrigger("Lost");
+            //_hpImage.color = _hpDefaultColor;
+           // _hpOutLineImage.color = _hpOutLineDefaultColor;
         }
 
     }

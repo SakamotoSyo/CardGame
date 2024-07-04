@@ -10,6 +10,7 @@ public class ScreenContainer : MonoBehaviour
     private static Dictionary<string, ScreenContainer> _screens = new Dictionary<string, ScreenContainer>();
 
     [SerializeField] private string _containerName;
+    [SerializeField] private FadeSystem _fadeAnim;
 
     private Stack<GameObject> _objStack = new Stack<GameObject>();
     private Transform _transform;
@@ -38,21 +39,24 @@ public class ScreenContainer : MonoBehaviour
     {
         var prefab = await AssetLoader.LoadAssetAsync<GameObject>(resouseKey);
         var insObj = Instantiate(prefab, transform);
-        _objStack.Push(insObj);
+        var prefabLifeCycle = insObj.GetComponent<IScreenLifeTimeCycle>();
+
+        await prefabLifeCycle.Initialize();
+        await prefabLifeCycle.WillPushEnter();
         //ここに画面遷移のAnimationの処理を入れたい
-        prefab.GetComponent<IScreenLifeTimeCycle>().PushEnter();
-
-
-        //AssetLoader.Release(ResourceKey.Prefabs.MainBattleScreen);
+        await _fadeAnim.FadeIn();
+        prefabLifeCycle.DidPopEnter();
+        _objStack.Push(insObj);
     }
 
-    public void Pop(int popCount)
+    public async UniTask Pop(int popCount)
     {
         //画面遷移
         if (popCount > _objStack.Count)
         {
             throw new InvalidOperationException("指定の数以上のPopするUIがありません");
         }
+        await _fadeAnim.FadeOut();
         Destroy(_objStack.Pop());
     }
 }

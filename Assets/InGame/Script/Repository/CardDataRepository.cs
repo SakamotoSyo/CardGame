@@ -28,8 +28,15 @@ public class CardDataRepository : ICardDataRepository
             card.Name = d.Name;
             card.Rare = d.Rare;
             card.Description = d.Description;
-            card.Effect = _effectMasterTable.EffectTable.FindById(d.EffectId.ToString()).EffectList;
             card.Cost = d.Cost;
+
+            card.Effect = _effectMasterTable.EffectTable.FindById(d.EffectId.ToString()).EffectList;
+            var effectPowerArray = d.EffectPower.Split(',');
+            for (int i = 0; i < effectPowerArray.Length; i++) 
+            {
+                card.Effect[i].EffectPower = int.Parse(effectPowerArray[i]);
+            }
+
             _cardData.Add(d.Id, card);
         }
     }
