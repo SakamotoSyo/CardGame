@@ -21,6 +21,7 @@ public sealed class ApplicationCompositionRoot : LifetimeScope
         builder.Register<IEnemyDataRepository, EnemyDataRepositoryMock>(Lifetime.Singleton);
         builder.Register<ICardDataRepository, CardDataRepository>(Lifetime.Singleton);
         builder.Register<IEffectDataRepository, EffectDataRepository>(Lifetime.Singleton);
+        builder.Register<IDungeonRunRepository, DungeonRunRepository>(Lifetime.Singleton);
 
         //Actor
         builder.Register<IPlayerStatus, PlayerStatus>(Lifetime.Singleton);

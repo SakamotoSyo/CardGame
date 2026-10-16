@@ -22,7 +22,7 @@ public class TitleScreen : ScreenBase
         _titleButton.onClick.AddListener(() =>
         {
             //_transitionService.BattleStart().Forget();
-            _transitionService.MapSelectScreen().Forget();
+            _transitionService.StageSelectScreen().Forget();
         });
 
         _testButton.onClick.AddListener(() =>

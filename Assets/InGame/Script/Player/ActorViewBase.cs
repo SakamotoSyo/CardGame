@@ -58,18 +58,19 @@ public abstract class ActorViewBase : MonoBehaviour
     /// <param name="num"></param>
     public virtual void SetDefense(float num)
     {
+        //防御表示のUIはPrefabによって未設定のことがあるので、あるものだけ更新する
         if (0 < num)
         {
-            _defenceObj.SetActive(true);
-            _defenceText.text = num.ToString("0");
-            _defenceEffectAnim.SetTrigger("Active");
+            if (_defenceObj != null) _defenceObj.SetActive(true);
+            if (_defenceText != null) _defenceText.text = num.ToString("0");
+            if (_defenceEffectAnim != null) _defenceEffectAnim.SetTrigger("Active");
             //_hpImage.color = _hpDefenceColor;
             //_hpOutLineImage.color = _hpOutLineDefenceColor;
         }
         else
         {
-            _defenceObj.SetActive(false);
-            _defenceEffectAnim.SetTrigger("Lost");
+            if (_defenceObj != null) _defenceObj.SetActive(false);
+            if (_defenceEffectAnim != null) _defenceEffectAnim.SetTrigger("Lost");
             //_hpImage.color = _hpDefaultColor;
            // _hpOutLineImage.color = _hpOutLineDefaultColor;
         }
@@ -88,6 +89,7 @@ public abstract class ActorViewBase : MonoBehaviour
     /// <param name="value">受けたダメージ</param>
     public async UniTask DamageEffectUI(float value)
     {
+        if (_damageEffectText == null || _damageEffectAnim == null) return;
         var token = this.GetCancellationTokenOnDestroy();
         _damageEffectText.enabled = true;
         _damageEffectText.text = (int.Parse(_currentHpText.text) - value).ToString("0");

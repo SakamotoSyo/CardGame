@@ -32,7 +32,19 @@ public sealed class TransitionService : IInitializable
         await _mainContainer.Push(ResourceKey.Prefabs.TitleScreen);
     }
 
-    public async UniTask MapSelectScreen() 
+    public async UniTask StageSelectScreen()
+    {
+        await _mainContainer.Pop(1);
+        await _mainContainer.Push(ResourceKey.Prefabs.StageSelectScreen);
+    }
+
+    public async UniTask BackToTitleScreen()
+    {
+        await _mainContainer.Pop(1);
+        await _mainContainer.Push(ResourceKey.Prefabs.TitleScreen);
+    }
+
+    public async UniTask MapSelectScreen()
     {
         await _mainContainer.Pop(1);
         await _mainContainer.Push(ResourceKey.Prefabs.MapSelectScreen);
