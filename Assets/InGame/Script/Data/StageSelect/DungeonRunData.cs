@@ -18,6 +18,25 @@ public sealed class DungeonRunData
     public List<StageMapRow> Rows = new List<StageMapRow>();
     /// <summary>予定ルートとして印を付けたカード</summary>
     public List<StageMapPos> PlannedCells = new List<StageMapPos>();
+    /// <summary>今日の戦闘に出発したが、まだ勝利していない。中断しても日が進まないよう、勝つまでは翌日にしない</summary>
+    public bool HasPendingStage;
+    /// <summary>出発した戦闘の列</summary>
+    public int PendingColumn;
+    /// <summary>出発した戦闘に勝利した。次にステージ選択画面を開いたときに翌日へ進む</summary>
+    public bool IsPendingStageCleared;
+
+    public void SetPendingStage(int column)
+    {
+        HasPendingStage = true;
+        PendingColumn = column;
+        IsPendingStageCleared = false;
+    }
+
+    /// <summary>戦闘に勝利したときに戦闘側から呼ぶ</summary>
+    public void ClearPendingStage()
+    {
+        if (HasPendingStage) IsPendingStageCleared = true;
+    }
 
     public bool IsPlanned(int day, int column)
     {

@@ -41,16 +41,32 @@ public sealed class StageMapGenerator
         }
     }
 
+    /// <summary>
+    /// 保存されていたランが今の設定で表示できるか(設定の変更やセーブの破損で横幅や位置が合わなくなっていないか)
+    /// </summary>
+    public bool IsValid(DungeonRunData run)
+    {
+        if (run.Day < 1 || run.Rows == null || run.PlannedCells == null) return false;
+        if (run.Column < 0 || run.Column >= Width) return false;
+        if (run.HasPendingStage && (run.PendingColumn < 0 || run.PendingColumn >= Width)) return false;
+        foreach (var row in run.Rows)
+        {
+            if (row == null || row.Cells == null || row.Cells.Length != Width) return false;
+        }
+        return true;
+    }
+
     public StageType GetCell(DungeonRunData run, int day, int column)
     {
         return run.Rows[day - 1].Cells[column];
     }
 
     /// <summary>
-    /// 今日選べるカードか(前日に選んだ列の真上とその左右)
+    /// 今日選べるカードか(前日に選んだ列の真上とその左右。戦闘の途中で中断していたらその戦闘だけ)
     /// </summary>
     public bool IsSelectable(DungeonRunData run, int column)
     {
+        if (run.HasPendingStage) return column == run.PendingColumn;
         return Mathf.Abs(column - run.Column) <= 1;
     }
 
@@ -70,6 +86,8 @@ public sealed class StageMapGenerator
     {
         var type = GetCell(run, run.Day, column);
         run.PlannedCells.RemoveAll(p => p.Day <= run.Day);
+        run.HasPendingStage = false;
+        run.IsPendingStageCleared = false;
         run.Column = column;
         run.Day++;
         EnsureRows(run);

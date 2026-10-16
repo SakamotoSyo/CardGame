@@ -1,5 +1,6 @@
 //日本語対応
 using System.IO;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -10,6 +11,8 @@ public class DungeonRunRepository : IDungeonRunRepository
 {
     public const string FileName = "DungeonRunData.json";
 
+    /// <summary>同じファイルへの書き込みが重なってJsonが壊れないよう、保存と削除を1つずつ実行する</summary>
+    private readonly SemaphoreSlim _fileLock = new SemaphoreSlim(1, 1);
     private bool _isLoaded;
 
     public DungeonRunData Current { get; private set; }
@@ -24,7 +27,17 @@ public class DungeonRunRepository : IDungeonRunRepository
     public async UniTask Save()
     {
         if (Current == null) return;
-        await LocalData.SaveAsyncData(FileName, Current);
+        await _fileLock.WaitAsync();
+        try
+        {
+            //待っている間に破棄されていたら保存しない
+            if (Current == null) return;
+            await LocalData.SaveAsyncData(FileName, Current);
+        }
+        finally
+        {
+            _fileLock.Release();
+        }
     }
 
     public void StartNewRun(DungeonRunData runData)
@@ -32,11 +45,18 @@ public class DungeonRunRepository : IDungeonRunRepository
         Current = runData;
     }
 
-    public UniTask DeleteRun()
+    public async UniTask DeleteRun()
     {
         Current = null;
-        var path = Path.Combine(Application.persistentDataPath, FileName);
-        if (File.Exists(path)) File.Delete(path);
-        return UniTask.CompletedTask;
+        await _fileLock.WaitAsync();
+        try
+        {
+            var path = Path.Combine(Application.persistentDataPath, FileName);
+            if (File.Exists(path)) File.Delete(path);
+        }
+        finally
+        {
+            _fileLock.Release();
+        }
     }
 }

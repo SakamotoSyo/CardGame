@@ -93,17 +93,23 @@ public class StageSelectScreen : ScreenBase
 
     private async UniTask SetUp()
     {
-        await _runRepository.LoadData();
-        if (_runRepository.Current == null)
+        try
         {
-            _runRepository.StartNewRun(_generator.CreateNewRun());
+            await LoadRun();
+            CreateNodes();
+            Refresh(true);
         }
-        _run = _runRepository.Current;
-        _generator.EnsureRows(_run);
-        await _runRepository.Save();
-
-        CreateNodes();
-        Refresh(true);
+        catch (System.Exception e)
+        {
+            //読み込みに失敗しても暗転したまま操作できなくならないよう、タイトルへ戻れる状態にする
+            Debug.LogException(e);
+            _run = null;
+            _hintText.text = "マップの読み込みに失敗しました。タイトルへ戻ってください";
+            await _fadeImage.DOFade(0f, 0.5f).SetLink(gameObject).ToUniTask();
+            _fadeImage.raycastTarget = false;
+            _isBusy = false;
+            return;
+        }
 
         //暗転から明けながら、盤面が上から1列分スクロールして今日の列が手前に来る
         _board.anchoredPosition = new Vector2(0f, _rowSpacing);
@@ -114,6 +120,28 @@ public class StageSelectScreen : ScreenBase
             .ToUniTask();
         _fadeImage.raycastTarget = false;
         _isBusy = false;
+
+        //中断した戦闘があれば、そのカードを選んだ状態から再開する
+        if (_run.HasPendingStage) Select(_run.PendingColumn);
+    }
+
+    private async UniTask LoadRun()
+    {
+        await _runRepository.LoadData();
+        var run = _runRepository.Current;
+        if (run == null || !_generator.IsValid(run))
+        {
+            if (run != null) Debug.LogWarning("保存されていたランが現在のマップ設定と合わないため、新しいランを開始します");
+            _runRepository.StartNewRun(_generator.CreateNewRun());
+        }
+        _run = _runRepository.Current;
+        _generator.EnsureRows(_run);
+        //戦闘に勝って戻ってきたら、ここで翌日へ進める
+        if (_run.HasPendingStage && _run.IsPendingStageCleared)
+        {
+            _generator.Advance(_run, _run.PendingColumn);
+        }
+        await _runRepository.Save();
     }
 
     private void BindView()
@@ -289,7 +317,16 @@ public class StageSelectScreen : ScreenBase
             .ToUniTask();
 
         var info = _settings.GetInfo(type);
-        _generator.Advance(_run, _selectedColumn);
+        var isBattle = type == StageType.Battle || type == StageType.Elite || type == StageType.Boss;
+        if (isBattle)
+        {
+            //戦闘は勝つまで日を進めない(途中でアプリを終了して戦闘を飛ばせないようにする)
+            _run.SetPendingStage(_selectedColumn);
+        }
+        else
+        {
+            _generator.Advance(_run, _selectedColumn);
+        }
         _run.ActiveStage = type;
         _selectedColumn = -1;
         await _runRepository.Save();
