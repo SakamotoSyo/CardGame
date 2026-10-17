@@ -50,7 +50,7 @@ public sealed class TransitionService : IInitializable
         await _mainContainer.Push(ResourceKey.Prefabs.MapSelectScreen);
     }
 
-    public async UniTask TestScreen() 
+    public async UniTask DeckBuildScreen()
     {
         await _mainContainer.Pop(1);
         await _mainContainer.Push(ResourceKey.Prefabs.DeckBuildScreen);

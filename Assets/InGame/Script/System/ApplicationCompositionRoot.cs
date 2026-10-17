@@ -22,6 +22,7 @@ public sealed class ApplicationCompositionRoot : LifetimeScope
         builder.Register<ICardDataRepository, CardDataRepository>(Lifetime.Singleton);
         builder.Register<IEffectDataRepository, EffectDataRepository>(Lifetime.Singleton);
         builder.Register<IDungeonRunRepository, DungeonRunRepository>(Lifetime.Singleton);
+        builder.Register<IDeckRepository, DeckRepository>(Lifetime.Singleton);
 
         //Actor
         builder.Register<IPlayerStatus, PlayerStatus>(Lifetime.Singleton);

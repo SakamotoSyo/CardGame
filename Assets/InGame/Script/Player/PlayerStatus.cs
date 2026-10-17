@@ -30,15 +30,22 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
     private readonly ReactiveCollection<CardData> _graveyardCards = new();
 
     private ICardDataRepository _cardDataRepository;
+    private IDeckRepository _deckRepository;
 
     [Inject]
-    public PlayerStatus(ICardDataRepository cardDataRepository) 
+    public PlayerStatus(ICardDataRepository cardDataRepository, IDeckRepository deckRepository) 
     {
         _cardDataRepository = cardDataRepository;
+        _deckRepository = deckRepository;
     }
 
     public async UniTask SetUp()
     {
+        //Singletonなので、前の戦闘の札が残らないよう空にしてから読み込む
+        _handCardList.Clear();
+        _deckCardList.Clear();
+        _graveyardCards.Clear();
+
         var saveData = await LocalData.LoadAsyncData<PlayerStatus>("PlayerStatus");
 
         //セーブデータがなかった場合初期札を読み込む
@@ -50,7 +57,9 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         {
             Debug.Log("ステータスロード中");
             var data = await Addressables.LoadAssetAsync<InitialPlayerStatus>(ResourceKey.MasterData.PlayerInitStatus);
-            SetInitPlayerStatus(data);
+            //デッキ編集画面で保存したデッキがあれば初期札の代わりに使う
+            await _deckRepository.LoadData();
+            SetInitPlayerStatus(data, _deckRepository.Current?.CardIds);
         }
     }
 
@@ -161,17 +170,25 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
     /// 初期ステータスをセットする関数
     /// </summary>
     /// <param name="playerStatus"></param>
-    public void SetInitPlayerStatus(InitialPlayerStatus playerStatus)
+    /// <param name="deckCardIds">保存したデッキ。nullなら初期ステータスの札を使う</param>
+    public void SetInitPlayerStatus(InitialPlayerStatus playerStatus, IReadOnlyList<int> deckCardIds = null)
     {
         _maxHp.Value = playerStatus.MaxHp;
         _currentHp.Value = playerStatus.MaxHp;
         _maxCost = playerStatus.MaxCost;
         _cost.Value = _maxCost;
 
-        for (int i = 0; i < playerStatus.CardId.Count; i++)
+        var cardIds = deckCardIds ?? playerStatus.CardId;
+        for (int i = 0; i < cardIds.Count; i++)
         {
             //カードの読み込み
-            var loadData = _cardDataRepository.FindById(playerStatus.CardId[i]);
+            var loadData = _cardDataRepository.FindById(cardIds[i]);
+            //マスタから消えたカードは山札に入れない
+            if (loadData == null)
+            {
+                Debug.LogWarning($"Id:{cardIds[i]}のカードがマスタにないため山札に入れません");
+                continue;
+            }
             _deckCardList.Add(loadData);
         }
 

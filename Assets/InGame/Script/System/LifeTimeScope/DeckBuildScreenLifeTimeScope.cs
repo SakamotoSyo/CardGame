@@ -1,15 +1,14 @@
 //日本語対応
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
 public class DeckBuildScreenLifeTimeScope : LifetimeScope
 {
+    [SerializeField] private DeckBuildSettings _deckBuildSettings;
+
     protected override void Configure(IContainerBuilder builder)
     {
-
+        builder.RegisterInstance(_deckBuildSettings);
     }
-
 }

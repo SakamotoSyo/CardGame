@@ -3,12 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 using Cysharp.Threading.Tasks;
 
 public class TitleScreen : ScreenBase
 {
     [SerializeField] private Button _titleButton;
-    [SerializeField] private Button _testButton;
+    [FormerlySerializedAs("_testButton")]
+    [SerializeField] private Button _deckBuildButton;
     private TransitionService _transitionService;
 
     [VContainer.Inject]
@@ -25,9 +27,9 @@ public class TitleScreen : ScreenBase
             _transitionService.StageSelectScreen().Forget();
         });
 
-        _testButton.onClick.AddListener(() =>
+        _deckBuildButton.onClick.AddListener(() =>
         {
-            _transitionService.TestScreen().Forget();
+            _transitionService.DeckBuildScreen().Forget();
         });
     }
     public void PopExit()

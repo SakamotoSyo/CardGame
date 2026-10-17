@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using VContainer;
 
@@ -44,5 +45,10 @@ public class CardDataRepository : ICardDataRepository
     public CardData FindById(int id)
     {
         return !_cardData.TryGetValue(id, out var cardData) ? null : cardData;
+    }
+
+    public IReadOnlyList<CardData> GetAll()
+    {
+        return _cardData.Values.OrderBy(c => c.Id).ToList();
     }
 }
