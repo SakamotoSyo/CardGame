@@ -80,10 +80,7 @@ public class EnemyStatus : StatusModelBase, IEnemyStatus
 
     public void AttackDecisionReset()
     {
-        for (int i = 0; i < _enemyTurnEffect.Count; i++)
-        {
-            _enemyTurnEffect.RemoveAt(0);
-        }
+        _enemyTurnEffect.Clear();
     }
 
     public IReactiveCollection<EffectMaster> GetEnemyTurnEffectOb()

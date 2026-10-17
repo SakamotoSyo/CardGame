@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using UniRx;
+using DG.Tweening;
 using UnityEngine.Assertions;
 using System;
 
@@ -44,6 +45,23 @@ public class EnemyView : ActorViewBase
         Destroy(_iconScriptList[0].gameObject);
         _iconScriptList.RemoveAt(0);
         _attackAnimEnd.OnNext(new());
+    }
+
+    /// <summary>
+    /// 倒されたときに行動アイコンを消してフェードアウトする
+    /// </summary>
+    public void Die()
+    {
+        foreach (var icon in _iconScriptList)
+        {
+            if (icon != null) Destroy(icon.gameObject);
+        }
+        _iconScriptList.Clear();
+
+        //並びが崩れないよう非表示にはせず、透明にしてタップを受け付けなくする
+        if (!TryGetComponent<CanvasGroup>(out var group)) group = gameObject.AddComponent<CanvasGroup>();
+        group.blocksRaycasts = false;
+        group.DOFade(0f, 0.4f).SetLink(gameObject);
     }
 
     public Sprite GetIconSprite(EffectType typeImage)

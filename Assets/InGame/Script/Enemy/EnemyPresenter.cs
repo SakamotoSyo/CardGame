@@ -23,6 +23,7 @@ public class EnemyPresenter : IDisposable
         _enemyStatus.DefenceNum.Subscribe(_enemyView.SetDefense).AddTo(_compositeDisposable);
         _enemyStatus.MaxHp.Subscribe(_enemyView.MaxHpSet).AddTo(_compositeDisposable);
         _enemyStatus.CurrentHp.Subscribe(_enemyView.SetHpCurrent).AddTo(_compositeDisposable);
+        _enemyStatus.CurrentHp.Where(hp => hp <= 0).Take(1).Subscribe(_ => _enemyView.Die()).AddTo(_compositeDisposable);
         _enemyStatus.EnemyTurnEffect.ObserveAdd().Subscribe(x => _enemyView.AttackDecisionView(x.Value)).AddTo(_compositeDisposable);
         _enemyStatus.OnAttack.Subscribe(_ => _enemyView.DeleteIcon().Forget()).AddTo(_compositeDisposable);
         _enemyView.AttackAnimEnd.Subscribe(_ => _enemyStatus.AttackEnd()).AddTo(_compositeDisposable);

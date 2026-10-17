@@ -13,6 +13,7 @@ public interface IEnemyStatus
     public IReactiveProperty<float> MaxHp { get; }
     public IReactiveProperty<float> CurrentHp { get; }
     public IReactiveProperty<float> AttackNum { get; }
+    public bool IsDead { get; }
     public void AttackExecute();
     public void AttackEnd();
 }

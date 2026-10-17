@@ -67,6 +67,8 @@ public class HandleCardEffectField : MonoBehaviour
 
         for (int i = 0; i < _env.EnemyViewList.Count; i++)
         {
+            //倒れた敵は狙えない
+            if (_env.EnemyStatusList[i].IsDead) continue;
             var dis = Vector3.SqrMagnitude(mousePos - _env.EnemyViewList[i].gameObject.transform.position);
 
             if (saveDistance > dis)

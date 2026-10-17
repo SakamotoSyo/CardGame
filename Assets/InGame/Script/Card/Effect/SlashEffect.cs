@@ -14,11 +14,13 @@ public class SlashEffect : IEffect
     {
         if (TargetType.Player == targetType) 
         {
-            env.PlayerStatus.CurrentHp.Value -= EffectPower; 
+            env.PlayerStatus.CurrentHp.Value = Mathf.Max(0, env.PlayerStatus.CurrentHp.Value - EffectPower);
         }
         else if(TargetType.Enemy == targetType)
         {
-            env.EnemyStatusList[env.TargetEnemy].CurrentHp.Value -= EffectPower;
+            var target = env.GetTargetEnemy();
+            if (target == null) return;
+            target.CurrentHp.Value = Mathf.Max(0, target.CurrentHp.Value - EffectPower);
         }
     }
 }
