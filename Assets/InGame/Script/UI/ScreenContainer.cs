@@ -44,7 +44,7 @@ public class ScreenContainer : MonoBehaviour
         await prefabLifeCycle.Initialize();
         await prefabLifeCycle.WillPushEnter();
         //ここに画面遷移のAnimationの処理を入れたい
-        await _fadeAnim.FadeIn();
+        if (_fadeAnim != null) await _fadeAnim.FadeIn();
         prefabLifeCycle.DidPopEnter();
         _objStack.Push(insObj);
     }
@@ -56,7 +56,7 @@ public class ScreenContainer : MonoBehaviour
         {
             throw new InvalidOperationException("指定の数以上のPopするUIがありません");
         }
-        await _fadeAnim.FadeOut();
+        if (_fadeAnim != null) await _fadeAnim.FadeOut();
         Destroy(_objStack.Pop());
     }
 }
