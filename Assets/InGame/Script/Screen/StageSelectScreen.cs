@@ -379,6 +379,9 @@ public class StageSelectScreen : ScreenBase
         _popup.gameObject.SetActive(true);
         _popup.alpha = 0f;
         _popup.transform.localScale = Vector3.one * 0.9f;
+        //暗転用の画像はポップアップより手前にあるので、表示中はタップを通す(盤面はポップアップの背景が塞ぐ)
+        var fadeRaycast = _fadeImage.raycastTarget;
+        _fadeImage.raycastTarget = false;
         DOTween.Sequence()
             .Join(_popup.DOFade(1f, 0.2f))
             .Join(_popup.transform.DOScale(1f, 0.25f).SetEase(Ease.OutBack))
@@ -386,6 +389,7 @@ public class StageSelectScreen : ScreenBase
 
         _popupClosed = new UniTaskCompletionSource();
         await _popupClosed.Task;
+        _fadeImage.raycastTarget = fadeRaycast;
         await _popup.DOFade(0f, 0.15f).SetLink(gameObject).ToUniTask();
         _popup.gameObject.SetActive(false);
     }
