@@ -15,6 +15,15 @@ public class ScreenContainer : MonoBehaviour
     private Stack<GameObject> _objStack = new Stack<GameObject>();
     private Transform _transform;
 
+    /// <summary>
+    /// Domain Reloadを無効にしているとstaticな登録が前回のPlayから残るので、Play開始時に破棄する
+    /// </summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        _screens.Clear();
+    }
+
     private void Awake()
     {
         _screens.Add(_containerName, this);
