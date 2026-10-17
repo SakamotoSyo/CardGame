@@ -35,6 +35,8 @@ public sealed class CardData
     public int Rare;
     public string Description;
     public int Cost;
+    /// <summary>効果マスタに設定されたカードの分類(攻撃/防御/特殊)</summary>
+    public EffectType EffectType;
     public List<IEffect> Effect;
 
     public void EffectExecute(BattleEnviroment env, TargetType targetType)

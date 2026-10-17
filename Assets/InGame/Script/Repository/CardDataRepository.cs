@@ -31,7 +31,9 @@ public class CardDataRepository : ICardDataRepository
             card.Description = d.Description;
             card.Cost = d.Cost;
 
-            card.Effect = _effectMasterTable.EffectTable.FindById(d.EffectId.ToString()).EffectList;
+            var effectMaster = _effectMasterTable.EffectTable.FindById(d.EffectId.ToString());
+            card.EffectType = effectMaster.EffectType;
+            card.Effect = effectMaster.EffectList;
             var effectPowerArray = d.EffectPower.Split(',');
             for (int i = 0; i < effectPowerArray.Length; i++) 
             {
