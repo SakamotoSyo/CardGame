@@ -17,10 +17,17 @@ MonoBehaviour:
     - Id: 1
       EffectList:
       - rid: 8047723177499951104
-    - Id: 
-      EffectList: []
+      EffectType: 0
+    - Id: 2
+      EffectList:
+      - rid: 7115752732165144654
+      EffectType: 1
   references:
     version: 2
     RefIds:
+    - rid: 7115752732165144654
+      type: {class: SlashEffect, ns: , asm: Assembly-CSharp}
+      data: 
     - rid: 8047723177499951104
       type: {class: SlashEffect, ns: , asm: Assembly-CSharp}
+      data: 
