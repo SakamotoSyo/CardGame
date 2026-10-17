@@ -10,17 +10,23 @@ using UnityEngine;
 public class DungeonRunRepository : IDungeonRunRepository
 {
     public const string FileName = "DungeonRunData.json";
+    public static string FilePath => Path.Combine(Application.persistentDataPath, FileName);
 
     /// <summary>同じファイルへの書き込みが重なってJsonが壊れないよう、保存と削除を1つずつ実行する</summary>
     private readonly SemaphoreSlim _fileLock = new SemaphoreSlim(1, 1);
-    private bool _isLoaded;
+    /// <summary>読み込み中に再度呼ばれても、同じ読み込みの完了を待つ</summary>
+    private UniTask? _loadTask;
 
     public DungeonRunData Current { get; private set; }
 
     public async UniTask LoadData()
     {
-        if (_isLoaded) return;
-        _isLoaded = true;
+        _loadTask ??= LoadInternal().Preserve();
+        await _loadTask.Value;
+    }
+
+    private async UniTask LoadInternal()
+    {
         Current = await LocalData.LoadAsyncData<DungeonRunData>(FileName);
     }
 
@@ -51,8 +57,7 @@ public class DungeonRunRepository : IDungeonRunRepository
         await _fileLock.WaitAsync();
         try
         {
-            var path = Path.Combine(Application.persistentDataPath, FileName);
-            if (File.Exists(path)) File.Delete(path);
+            if (File.Exists(FilePath)) File.Delete(FilePath);
         }
         finally
         {

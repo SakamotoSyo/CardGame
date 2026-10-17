@@ -209,7 +209,13 @@ public static class StageSelectScreenPrefabGenerator
     [MenuItem("Tools/CardGame/Reset Dungeon Run")]
     public static void ResetRun()
     {
-        var path = Path.Combine(Application.persistentDataPath, DungeonRunRepository.FileName);
+        //Play中はメモリ上のランが次の保存で書き戻されてしまうので、停止中だけ削除する
+        if (Application.isPlaying)
+        {
+            Debug.LogWarning("Play中はランを削除できません。Playを停止してから実行してください");
+            return;
+        }
+        var path = DungeonRunRepository.FilePath;
         if (File.Exists(path)) File.Delete(path);
         Debug.Log("進行中のランを削除しました");
     }

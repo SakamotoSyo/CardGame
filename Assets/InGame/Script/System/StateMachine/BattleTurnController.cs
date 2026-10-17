@@ -8,6 +8,8 @@ using System.Threading;
 using System;
 using Object = UnityEngine.Object;
 using Cysharp.Threading.Tasks;
+using System.Linq;
+using UniRx;
 
 public class BattleTurnController : IBattleTurnController, IDisposable
 {
@@ -21,12 +23,16 @@ public class BattleTurnController : IBattleTurnController, IDisposable
     private readonly List<ActorAction> _orderOfAction = new List<ActorAction>();
     private CancellationTokenSource _tokenSouce = new();
     private BattleEnviroment _env;
+    private BattleResultService _battleResultService;
+    private readonly CompositeDisposable _disposables = new CompositeDisposable();
+    private bool _isFinished;
 
     [Inject]
-    public BattleTurnController(IPlayerStatus playerStatus, BattleEnviroment env)
+    public BattleTurnController(IPlayerStatus playerStatus, BattleEnviroment env, BattleResultService battleResultService)
     {
         PlayerStatus = playerStatus;
         _env = env;
+        _battleResultService = battleResultService;
     }
 
     public async UniTask Setup()
@@ -43,7 +49,39 @@ public class BattleTurnController : IBattleTurnController, IDisposable
         _turnStateMachine.AddTransition<EnemyTurnState, SelectNextActorTransitionState>
                                          ((int)TurnStateType.SelectNextActorTransitionState);
         _turnStateMachine.AddTransition<BattleStartState, SelectNextActorTransitionState>((int)TurnStateType.StartSelect);
+        ObserveBattleEnd();
         StartTurn();
+    }
+
+    /// <summary>
+    /// 敵が全滅したら勝利、プレイヤーのHPが0になったら敗北にする
+    /// </summary>
+    private void ObserveBattleEnd()
+    {
+        PlayerStatus.CurrentHp
+            .Where(hp => hp <= 0)
+            .Subscribe(_ => FinishBattle(false).Forget())
+            .AddTo(_disposables);
+
+        foreach (var enemy in _env.EnemyStatusList)
+        {
+            enemy.CurrentHp
+                .Where(_ => _env.EnemyStatusList.All(e => e.CurrentHp.Value <= 0))
+                .Subscribe(_ => FinishBattle(true).Forget())
+                .AddTo(_disposables);
+        }
+    }
+
+    private async UniTask FinishBattle(bool isWin)
+    {
+        if (_isFinished) return;
+        _isFinished = true;
+        //決着後にターンが進まないよう止める
+        _tokenSouce.Cancel();
+        _disposables.Clear();
+
+        if (isWin) await _battleResultService.Win();
+        else await _battleResultService.Lose();
     }
 
     private void StartTurn()
@@ -80,6 +118,7 @@ public class BattleTurnController : IBattleTurnController, IDisposable
     public void Dispose()
     {
         _tokenSouce.Cancel();
+        _disposables.Dispose();
         AssetLoader.Release(ResourceKey.Prefabs.StateTrun);
     }
 

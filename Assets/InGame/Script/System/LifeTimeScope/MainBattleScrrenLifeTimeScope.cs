@@ -14,5 +14,6 @@ public class MainBattleScrrenLifeTimeScope : LifetimeScope
         builder.RegisterComponent(_actorGenerator);
         builder.Register<IBattleTurnController, BattleTurnController>(Lifetime.Scoped);
         builder.Register<TestScript>(Lifetime.Scoped);
+        builder.Register<BattleResultService>(Lifetime.Scoped);
     }
 }
