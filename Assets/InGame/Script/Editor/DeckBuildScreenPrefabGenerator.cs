@@ -41,11 +41,7 @@ public static class DeckBuildScreenPrefabGenerator
     [MenuItem("Tools/CardGame/Generate DeckBuild Screen Prefab")]
     public static void Generate()
     {
-        _font = AssetDatabase.LoadAssetAtPath<Font>(FontPath);
-        _roundSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-        _knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-        _frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardFramePath);
-        _cardBackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardBackgroundPath);
+        LoadAssets();
         //設定アセットはApplicationCompositionRootから登録するので、ここでは作成と値の更新だけ行う
         var settings = LoadOrCreateSettings();
         //ボタンと棒の数は設定に合わせる。設定を変えたら再生成すればPrefabも揃う
@@ -191,6 +187,24 @@ public static class DeckBuildScreenPrefabGenerator
         Object.DestroyImmediate(root);
         AssetDatabase.SaveAssets();
         Debug.Log($"デッキ編集画面のPrefabを生成しました: {PrefabPath}");
+    }
+
+    private static void LoadAssets()
+    {
+        _font = AssetDatabase.LoadAssetAtPath<Font>(FontPath);
+        _roundSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+        _knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
+        _frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardFramePath);
+        _cardBackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardBackgroundPath);
+    }
+
+    /// <summary>
+    /// ほかの画面(ショップのガチャ結果など)でも、デッキ編集と同じ見た目のカードの表面を作る
+    /// </summary>
+    public static DeckCardFaceView CreateCardFace(Transform parent)
+    {
+        LoadAssets();
+        return CreateFace(parent);
     }
 
     private static DeckBuildSettings LoadOrCreateSettings()

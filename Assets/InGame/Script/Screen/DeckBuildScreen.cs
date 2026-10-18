@@ -74,6 +74,7 @@ public class DeckBuildScreen : ScreenBase
     private TransitionService _transitionService;
     private ICardDataRepository _cardDataRepository;
     private IDeckRepository _deckRepository;
+    private ICardCollectionRepository _collectionRepository;
     private DeckBuildSettings _settings;
     private bool _isBusy = true;
     /// <summary>デッキと一覧を作り終えたらtrue。読み込みに失敗したときは編集させない</summary>
@@ -93,11 +94,13 @@ public class DeckBuildScreen : ScreenBase
     public void Construct(TransitionService transitionService,
         ICardDataRepository cardDataRepository,
         IDeckRepository deckRepository,
+        ICardCollectionRepository collectionRepository,
         DeckBuildSettings settings)
     {
         _transitionService = transitionService;
         _cardDataRepository = cardDataRepository;
         _deckRepository = deckRepository;
+        _collectionRepository = collectionRepository;
         _settings = settings;
     }
 
@@ -190,6 +193,7 @@ public class DeckBuildScreen : ScreenBase
     /// </summary>
     private async UniTask LoadDeck()
     {
+        await _collectionRepository.LoadData();
         await _deckRepository.LoadData();
         var cardIds = _deckRepository.GetSavedCardIds();
         if (cardIds == null)
@@ -203,6 +207,34 @@ public class DeckBuildScreen : ScreenBase
 
         foreach (var id in cardIds) InsertSorted(id);
         _savedDeck.AddRange(_deck);
+
+        //所持している枚数より多く入っていたら、その分を外す(外したら未保存の状態になる)
+        foreach (var id in _counts.Keys.ToList())
+        {
+            var over = CountOf(id) - OwnedCount(id);
+            for (int i = 0; i < over; i++) RemoveOne(id);
+        }
+    }
+
+    private void RemoveOne(int cardId)
+    {
+        if (!_deck.Remove(cardId)) return;
+        var count = CountOf(cardId) - 1;
+        if (count > 0) _counts[cardId] = count;
+        else _counts.Remove(cardId);
+    }
+
+    private int OwnedCount(int cardId)
+    {
+        return _collectionRepository.GetCount(cardId);
+    }
+
+    /// <summary>
+    /// そのカードをデッキに入れられる枚数(同じカードの上限と所持枚数の少ない方)
+    /// </summary>
+    private int LimitOf(int cardId)
+    {
+        return Mathf.Min(_settings.MaxSameCardCount, OwnedCount(cardId));
     }
 
     /// <summary>
@@ -261,7 +293,9 @@ public class DeckBuildScreen : ScreenBase
         {
             _hintText.text = _deck.Count >= _settings.MaxDeckCount
                 ? $"デッキは{_settings.MaxDeckCount}枚までです"
-                : $"同じカードは{_settings.MaxSameCardCount}枚までです";
+                : CountOf(card.Id) >= _settings.MaxSameCardCount
+                    ? $"同じカードは{_settings.MaxSameCardCount}枚までです"
+                    : $"所持している{OwnedCount(card.Id)}枚までしか入れられません。ショップのガチャで増やせます";
             return;
         }
         InsertSorted(card.Id);
@@ -272,10 +306,8 @@ public class DeckBuildScreen : ScreenBase
 
     private void RemoveCard(CardData card)
     {
-        if (!CanEdit || card == null || !_deck.Remove(card.Id)) return;
-        var count = CountOf(card.Id) - 1;
-        if (count > 0) _counts[card.Id] = count;
-        else _counts.Remove(card.Id);
+        if (!CanEdit || card == null || CountOf(card.Id) == 0) return;
+        RemoveOne(card.Id);
         Refresh();
         if (CountOf(card.Id) > 0) _rows[card.Id].Flash();
     }
@@ -290,7 +322,7 @@ public class DeckBuildScreen : ScreenBase
 
     private bool CanAdd(int cardId)
     {
-        return _deck.Count < _settings.MaxDeckCount && CountOf(cardId) < _settings.MaxSameCardCount;
+        return _deck.Count < _settings.MaxDeckCount && CountOf(cardId) < LimitOf(cardId);
     }
 
     private int CountOf(int cardId)
@@ -307,7 +339,7 @@ public class DeckBuildScreen : ScreenBase
     {
         foreach (var pair in _tiles)
         {
-            pair.Value.SetState(CountOf(pair.Key), _settings.MaxSameCardCount, CanAdd(pair.Key));
+            pair.Value.SetState(CountOf(pair.Key), LimitOf(pair.Key), CanAdd(pair.Key));
         }
         foreach (var pair in _rows)
         {
@@ -372,7 +404,8 @@ public class DeckBuildScreen : ScreenBase
             var card = tile.Card;
             var matchCost = _costFilter < 0 || CostColumn(card.Cost) == _costFilter;
             var matchKeyword = keyword.Length == 0 || _searchTexts[card.Id].Contains(keyword);
-            var visible = matchCost && matchKeyword;
+            //持っていないカードは一覧に出さない
+            var visible = OwnedCount(card.Id) > 0 && matchCost && matchKeyword;
             tile.gameObject.SetActive(visible);
             if (visible) visibleCount++;
         }
@@ -409,7 +442,7 @@ public class DeckBuildScreen : ScreenBase
     private void RefreshDetail()
     {
         var id = _detail.Card.Id;
-        _detail.SetCount(CountOf(id), _settings.MaxSameCardCount, CanAdd(id));
+        _detail.SetCount(CountOf(id), LimitOf(id), OwnedCount(id), CanAdd(id));
     }
 
     private async UniTask Save()

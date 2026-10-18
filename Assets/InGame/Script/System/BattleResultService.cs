@@ -1,5 +1,6 @@
 //日本語対応
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 using VContainer;
 
 /// <summary>
@@ -8,12 +9,19 @@ using VContainer;
 public sealed class BattleResultService
 {
     private readonly IDungeonRunRepository _runRepository;
+    private readonly IWalletRepository _walletRepository;
+    private readonly GachaSettings _gachaSettings;
     private readonly TransitionService _transitionService;
 
     [Inject]
-    public BattleResultService(IDungeonRunRepository runRepository, TransitionService transitionService)
+    public BattleResultService(IDungeonRunRepository runRepository,
+        IWalletRepository walletRepository,
+        GachaSettings gachaSettings,
+        TransitionService transitionService)
     {
         _runRepository = runRepository;
+        _walletRepository = walletRepository;
+        _gachaSettings = gachaSettings;
         _transitionService = transitionService;
     }
 
@@ -29,10 +37,30 @@ public sealed class BattleResultService
     }
 
     /// <summary>
-    /// 敗北したらランを破棄してタイトルへ戻る
+    /// 敗北したらランを終え、進んだ日数分のガチャ石を渡してからランを破棄し、タイトルへ戻る
     /// </summary>
     public async UniTask Lose()
     {
+        await _runRepository.LoadData();
+        var run = _runRepository.Current;
+        if (run != null)
+        {
+            //1日目で負けたら0日、DAY 8で負けたら7日進んだことになる
+            var advancedDays = Mathf.Max(0, run.Day - 1);
+            var reward = new RunReward
+            {
+                Day = run.Day,
+                AdvancedDays = advancedDays,
+                GachaStone = advancedDays * _gachaSettings.StonePerDay,
+            };
+            //渡せなかったときにランだけ消えて報酬を失わないよう、渡せたときだけ破棄する
+            if (!await _walletRepository.ReceiveRunReward(reward))
+            {
+                Debug.LogError("ガチャ石を保存できなかったため、ランを破棄せずにタイトルへ戻ります");
+                await _transitionService.BackToTitleScreen();
+                return;
+            }
+        }
         await _runRepository.DeleteRun();
         await _transitionService.BackToTitleScreen();
     }
