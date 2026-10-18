@@ -68,4 +68,40 @@ public class ScreenContainer : MonoBehaviour
         if (_fadeAnim != null) await _fadeAnim.FadeOut();
         Destroy(_objStack.Pop());
     }
+
+    /// <summary>
+    /// 一番上の画面を次の画面に入れ替える
+    /// 次の画面の準備ができてから今の画面を消すので、途中で失敗しても今の画面に戻して例外を投げる
+    /// </summary>
+    public async UniTask Replace(string resouseKey)
+    {
+        if (_objStack.Count == 0)
+        {
+            throw new InvalidOperationException("入れ替える画面がありません");
+        }
+
+        var prefab = await AssetLoader.LoadAssetAsync<GameObject>(resouseKey);
+        if (_fadeAnim != null) await _fadeAnim.FadeOut();
+
+        GameObject insObj = null;
+        IScreenLifeTimeCycle prefabLifeCycle;
+        try
+        {
+            insObj = Instantiate(prefab, transform);
+            prefabLifeCycle = insObj.GetComponent<IScreenLifeTimeCycle>();
+            await prefabLifeCycle.Initialize();
+            await prefabLifeCycle.WillPushEnter();
+        }
+        catch
+        {
+            if (insObj != null) Destroy(insObj);
+            if (_fadeAnim != null) await _fadeAnim.FadeIn();
+            throw;
+        }
+
+        Destroy(_objStack.Pop());
+        if (_fadeAnim != null) await _fadeAnim.FadeIn();
+        prefabLifeCycle.DidPopEnter();
+        _objStack.Push(insObj);
+    }
 }

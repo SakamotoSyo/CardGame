@@ -33,7 +33,8 @@ public class CardDataRepository : ICardDataRepository
 
             var effectMaster = _effectMasterTable.EffectTable.FindById(d.EffectId.ToString());
             card.EffectType = effectMaster.EffectType;
-            card.Effect = effectMaster.EffectList;
+            //効果マスタの効果は同じEffectIdのカードや敵と共有しているので、複製してから威力を設定する
+            card.Effect = effectMaster.EffectList.Select(e => e.Clone()).ToList();
             var effectPowerArray = d.EffectPower.Split(',');
             for (int i = 0; i < effectPowerArray.Length; i++) 
             {

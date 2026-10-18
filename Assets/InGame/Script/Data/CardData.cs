@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Linq;
 
 [Serializable]
 public sealed class LoadCardData
@@ -52,7 +53,10 @@ public sealed class CardData
     /// </summary>
     public CardData Clone()
     {
-        return (CardData)MemberwiseClone();
+        var clone = (CardData)MemberwiseClone();
+        //効果も複製して、1枚の効果を書き換えても他の札に影響しないようにする
+        clone.Effect = Effect?.Select(e => e.Clone()).ToList();
+        return clone;
     }
 
     public void ReflectsLoadCardData(LoadCardData data)

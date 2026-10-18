@@ -23,4 +23,9 @@ public class SlashEffect : IEffect
             target.CurrentHp.Value = Mathf.Max(0, target.CurrentHp.Value - EffectPower);
         }
     }
+
+    public IEffect Clone()
+    {
+        return (IEffect)MemberwiseClone();
+    }
 }

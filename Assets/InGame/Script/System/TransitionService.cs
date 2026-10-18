@@ -53,12 +53,10 @@ public sealed class TransitionService : IInitializable
 
     /// <summary>
     /// 今の画面を閉じて次の画面を開く
-    /// 次の画面を読み込めてから閉じるので、読み込みに失敗しても今の画面は残り、呼び出し元で立て直せる
+    /// 次の画面の準備ができてから閉じるので、途中で失敗しても今の画面は残り、呼び出し元で立て直せる
     /// </summary>
     private async UniTask ReplaceScreen(string resourceKey)
     {
-        await AssetLoader.LoadAssetAsync<GameObject>(resourceKey);
-        await _mainContainer.Pop(1);
-        await _mainContainer.Push(resourceKey);
+        await _mainContainer.Replace(resourceKey);
     }
 }
