@@ -11,6 +11,7 @@ public abstract class StatusModelBase : DisposeState
 
     public IReactiveProperty<float> CurrentHp => _currentHp;
     protected readonly ReactiveProperty<float> _currentHp = new();
+    public bool IsDead => _currentHp.Value <= 0;
 
     public IReactiveProperty<float> AttackNum => _attack;
     protected readonly ReactiveProperty<float> _attack = new();

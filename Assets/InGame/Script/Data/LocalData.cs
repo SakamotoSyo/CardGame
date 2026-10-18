@@ -59,7 +59,8 @@ public class LocalData
     /// ローカルにデータをセーブする
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public static async UniTask SaveAsyncData<T>(string file, T data, string path = null)
+    /// <returns>保存に成功したらtrue</returns>
+    public static async UniTask<bool> SaveAsyncData<T>(string file, T data, string path = null)
     {
         try
         {
@@ -84,11 +85,13 @@ public class LocalData
             {
                 await fs.WriteAsync(bytes, 0, bytes.Length);
             }
+            return true;
         }
         catch (Exception ex)
         {
             Debug.LogError($"Save{file}");
             Debug.LogError(ex.Message);
+            return false;
         }
     }
 

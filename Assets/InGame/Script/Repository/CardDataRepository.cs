@@ -2,6 +2,7 @@
 using Cysharp.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using VContainer;
 
@@ -30,7 +31,10 @@ public class CardDataRepository : ICardDataRepository
             card.Description = d.Description;
             card.Cost = d.Cost;
 
-            card.Effect = _effectMasterTable.EffectTable.FindById(d.EffectId.ToString()).EffectList;
+            var effectMaster = _effectMasterTable.EffectTable.FindById(d.EffectId.ToString());
+            card.EffectType = effectMaster.EffectType;
+            //効果マスタの効果は同じEffectIdのカードや敵と共有しているので、複製してから威力を設定する
+            card.Effect = effectMaster.EffectList.Select(e => e.Clone()).ToList();
             var effectPowerArray = d.EffectPower.Split(',');
             for (int i = 0; i < effectPowerArray.Length; i++) 
             {
@@ -44,5 +48,10 @@ public class CardDataRepository : ICardDataRepository
     public CardData FindById(int id)
     {
         return !_cardData.TryGetValue(id, out var cardData) ? null : cardData;
+    }
+
+    public IReadOnlyList<CardData> GetAll()
+    {
+        return _cardData.Values.OrderBy(c => c.Id).ToList();
     }
 }

@@ -22,37 +22,41 @@ public sealed class TransitionService : IInitializable
 
     public async UniTask BattleStart()
     {
-        await _mainContainer.Pop(1);
-        await _mainContainer.Push(ResourceKey.Prefabs.MainBattleScreen);
+        await ReplaceScreen(ResourceKey.Prefabs.MainBattleScreen);
         //var obj = AssetLoader.AssetSynchronousLoad<GameObject>();
     }
 
-    public async UniTask TitleScreen() 
+    public async UniTask TitleScreen()
     {
         await _mainContainer.Push(ResourceKey.Prefabs.TitleScreen);
     }
 
     public async UniTask StageSelectScreen()
     {
-        await _mainContainer.Pop(1);
-        await _mainContainer.Push(ResourceKey.Prefabs.StageSelectScreen);
+        await ReplaceScreen(ResourceKey.Prefabs.StageSelectScreen);
     }
 
     public async UniTask BackToTitleScreen()
     {
-        await _mainContainer.Pop(1);
-        await _mainContainer.Push(ResourceKey.Prefabs.TitleScreen);
+        await ReplaceScreen(ResourceKey.Prefabs.TitleScreen);
     }
 
     public async UniTask MapSelectScreen()
     {
-        await _mainContainer.Pop(1);
-        await _mainContainer.Push(ResourceKey.Prefabs.MapSelectScreen);
+        await ReplaceScreen(ResourceKey.Prefabs.MapSelectScreen);
     }
 
-    public async UniTask TestScreen() 
+    public async UniTask DeckBuildScreen()
     {
-        await _mainContainer.Pop(1);
-        await _mainContainer.Push(ResourceKey.Prefabs.DeckBuildScreen);
+        await ReplaceScreen(ResourceKey.Prefabs.DeckBuildScreen);
+    }
+
+    /// <summary>
+    /// 今の画面を閉じて次の画面を開く
+    /// 次の画面の準備ができてから閉じるので、途中で失敗しても今の画面は残り、呼び出し元で立て直せる
+    /// </summary>
+    private async UniTask ReplaceScreen(string resourceKey)
+    {
+        await _mainContainer.Replace(resourceKey);
     }
 }

@@ -38,19 +38,49 @@ public class AssetLoader : MonoBehaviour
     //    return result;
     //}
 
-    public static async UniTask<T> LoadAssetAsync<T>(string address) 
+    /// <summary>
+    /// Domain Reloadを無効にしているとstaticなキャッシュが前回のPlayから残るので、Play開始時に破棄する
+    /// </summary>
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
     {
-        AsyncOperationHandle<T> addressableHandle = default;
-        if (!_handles.ContainsKey(address))
+        _handles.Clear();
+    }
+
+    public static async UniTask<T> LoadAssetAsync<T>(string address)
+    {
+        if (_handles.TryGetValue(address, out var cachedHandle))
         {
-            addressableHandle = Addressables.LoadAssetAsync<T>(address);
-            _handles.Add(address, addressableHandle);
+            if (cachedHandle.IsValid())
+            {
+                //読み込み中に再度呼ばれた場合も完了を待ってから返す
+                if (!cachedHandle.IsDone) await cachedHandle.Task;
+                if (cachedHandle.IsValid() && cachedHandle.Status == AsyncOperationStatus.Succeeded)
+                {
+                    return (T)cachedHandle.Result;
+                }
+                //失敗したハンドルの後始末は読み込みを始めた側が行う。次に呼ばれたときに読み込み直す
+                throw new System.InvalidOperationException($"{address}の読み込みに失敗しました");
+            }
+            //解放済みなどで無効になったハンドルは読み込み直す
+            _handles.Remove(address);
         }
-        else 
-        {
-            return (T)_handles[address].Result;
-        }
+
+        var addressableHandle = Addressables.LoadAssetAsync<T>(address);
+        _handles.Add(address, addressableHandle);
         await addressableHandle.Task;
+        if (addressableHandle.Status != AsyncOperationStatus.Succeeded)
+        {
+            //失敗したハンドルをキャッシュに残すと、次に呼ばれても読み込み直せないので取り除く
+            var exception = addressableHandle.OperationException;
+            AsyncOperationHandle untypedHandle = addressableHandle;
+            if (_handles.TryGetValue(address, out var current) && current.Equals(untypedHandle))
+            {
+                _handles.Remove(address);
+            }
+            Addressables.Release(addressableHandle);
+            throw new System.InvalidOperationException($"{address}の読み込みに失敗しました", exception);
+        }
         return addressableHandle.Result;
     }
 
@@ -66,8 +96,9 @@ public class AssetLoader : MonoBehaviour
     /// <param name="address"></param>
     public static void Release(string address) 
     {
-        Addressables.Release(_handles[address]);
+        if (!_handles.TryGetValue(address, out var handle)) return;
         _handles.Remove(address);
+        if (handle.IsValid()) Addressables.Release(handle);
     }
 
 

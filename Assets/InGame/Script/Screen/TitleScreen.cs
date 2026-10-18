@@ -3,12 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Serialization;
 using Cysharp.Threading.Tasks;
 
 public class TitleScreen : ScreenBase
 {
     [SerializeField] private Button _titleButton;
-    [SerializeField] private Button _testButton;
+    [FormerlySerializedAs("_testButton")]
+    [SerializeField] private Button _deckBuildButton;
     private TransitionService _transitionService;
 
     [VContainer.Inject]
@@ -22,13 +24,37 @@ public class TitleScreen : ScreenBase
         _titleButton.onClick.AddListener(() =>
         {
             //_transitionService.BattleStart().Forget();
-            _transitionService.StageSelectScreen().Forget();
+            Transition(_transitionService.StageSelectScreen).Forget();
         });
 
-        _testButton.onClick.AddListener(() =>
+        _deckBuildButton.onClick.AddListener(() =>
         {
-            _transitionService.TestScreen().Forget();
+            Transition(_transitionService.DeckBuildScreen).Forget();
         });
+    }
+
+    /// <summary>
+    /// 連打で遷移が重ならないよう、遷移中はボタンを押せなくする。失敗したら押せるように戻す
+    /// </summary>
+    private async UniTask Transition(System.Func<UniTask> transition)
+    {
+        if (!_titleButton.interactable || !_deckBuildButton.interactable) return;
+        SetButtonsInteractable(false);
+        try
+        {
+            await transition();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogException(e);
+            if (this != null) SetButtonsInteractable(true);
+        }
+    }
+
+    private void SetButtonsInteractable(bool interactable)
+    {
+        _titleButton.interactable = interactable;
+        _deckBuildButton.interactable = interactable;
     }
     public void PopExit()
     {

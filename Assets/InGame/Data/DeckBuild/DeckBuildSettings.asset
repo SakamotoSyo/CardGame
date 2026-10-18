@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 365c63c3b0e5cea4db6f7d2a00201648, type: 3}
+  m_Name: DeckBuildSettings
+  m_EditorClassIdentifier: Assembly-CSharp::DeckBuildSettings
+  MinDeckCount: 3
+  MaxDeckCount: 30
+  MaxSameCardCount: 3
+  MaxCostColumn: 6
+  AttackIcon: {fileID: 21300000, guid: bd9342f3a5b68a44692319700281e022, type: 3}
+  DefenceIcon: {fileID: 21300000, guid: ee1e7a4d7b8636646b313e322c305c2b, type: 3}
+  SpecialIcon: {fileID: 0}
+  RarityColors:
+  - {r: 0.75, g: 0.54, b: 0.35, a: 1}
+  - {r: 0.79, g: 0.82, b: 0.85, a: 1}
+  - {r: 1, g: 0.8, b: 0.35, a: 1}
+  - {r: 0.79, g: 0.55, b: 1, a: 1}

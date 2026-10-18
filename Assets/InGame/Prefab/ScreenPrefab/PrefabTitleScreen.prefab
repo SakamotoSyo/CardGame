@@ -209,7 +209,7 @@ GameObject:
   - component: {fileID: 3867253538221053057}
   - component: {fileID: 3445461651222506596}
   m_Layer: 5
-  m_Name: Button (Legacy) (1)
+  m_Name: DeckBuildButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -499,7 +499,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: Button
+  m_Text: "\u30C7\u30C3\u30AD\u7DE8\u96C6"
 --- !u!1 &3240222316057145188
 GameObject:
   m_ObjectHideFlags: 0
@@ -547,7 +547,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _titleButton: {fileID: 6654738602517913706}
-  _testButton: {fileID: 3445461651222506596}
+  _deckBuildButton: {fileID: 3445461651222506596}
 --- !u!1 &4558053182611504903
 GameObject:
   m_ObjectHideFlags: 0

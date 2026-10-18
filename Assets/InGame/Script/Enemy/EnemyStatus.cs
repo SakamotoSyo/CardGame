@@ -72,6 +72,8 @@ public class EnemyStatus : StatusModelBase, IEnemyStatus
     public void AttackEnd() 
     {
         _enemyTurnEffect.RemoveAt(0);
+        //行動の途中で倒されたら、残りの行動は取りやめる
+        if (IsDead) _enemyTurnEffect.Clear();
         if (_enemyTurnEffect.Count == 0) return;
         AttackExecute();
     }
@@ -80,10 +82,7 @@ public class EnemyStatus : StatusModelBase, IEnemyStatus
 
     public void AttackDecisionReset()
     {
-        for (int i = 0; i < _enemyTurnEffect.Count; i++)
-        {
-            _enemyTurnEffect.RemoveAt(0);
-        }
+        _enemyTurnEffect.Clear();
     }
 
     public IReactiveCollection<EffectMaster> GetEnemyTurnEffectOb()

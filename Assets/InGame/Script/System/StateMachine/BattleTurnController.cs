@@ -66,7 +66,7 @@ public class BattleTurnController : IBattleTurnController, IDisposable
         foreach (var enemy in _env.EnemyStatusList)
         {
             enemy.CurrentHp
-                .Where(_ => _env.EnemyStatusList.All(e => e.CurrentHp.Value <= 0))
+                .Where(_ => _env.IsAllEnemyDead)
                 .Subscribe(_ => FinishBattle(true).Forget())
                 .AddTo(_disposables);
         }
@@ -97,8 +97,10 @@ public class BattleTurnController : IBattleTurnController, IDisposable
     {
         _orderOfAction.Add(new ActorAction(_env.PlayerStatus));
 
-        for (int i = 0; i < _env.EnemyStatusList.Count; i++) 
+        for (int i = 0; i < _env.EnemyStatusList.Count; i++)
         {
+            //倒れた敵は行動しない
+            if (_env.EnemyStatusList[i].IsDead) continue;
             _orderOfAction.Add(new ActorAction(_env.EnemyStatusList[i]));
         }
 

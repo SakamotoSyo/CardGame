@@ -30,28 +30,48 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
     private readonly ReactiveCollection<CardData> _graveyardCards = new();
 
     private ICardDataRepository _cardDataRepository;
+    private IDeckRepository _deckRepository;
 
     [Inject]
-    public PlayerStatus(ICardDataRepository cardDataRepository) 
+    public PlayerStatus(ICardDataRepository cardDataRepository, IDeckRepository deckRepository) 
     {
         _cardDataRepository = cardDataRepository;
+        _deckRepository = deckRepository;
     }
 
     public async UniTask SetUp()
     {
-        var saveData = await LocalData.LoadAsyncData<PlayerStatus>("PlayerStatus");
+        //Singletonなので、前の戦闘の札が残らないよう空にしてから読み込む
+        _handCardList.Clear();
+        _deckCardList.Clear();
+        _graveyardCards.Clear();
 
-        //セーブデータがなかった場合初期札を読み込む
-        if (saveData != null)
+        var saveData = await LocalData.LoadAsyncData<PlayerStatus>("PlayerStatus");
+        //JsonUtilityはコンストラクタを通さずに作るので、ReactivePropertyがnullのままになる。読めなかったものとして初期ステータスを使う
+        if (saveData != null && saveData.MaxHp == null)
         {
-            LoadPlayerData(saveData);
+            Debug.LogWarning("PlayerStatusのセーブデータを読み込めないため、初期ステータスを使います");
+            saveData = null;
         }
-        else
+
+        Debug.Log("ステータスロード中");
+        var handle = Addressables.LoadAssetAsync<InitialPlayerStatus>(ResourceKey.MasterData.PlayerInitStatus);
+        try
         {
-            Debug.Log("ステータスロード中");
-            var data = await Addressables.LoadAssetAsync<InitialPlayerStatus>(ResourceKey.MasterData.PlayerInitStatus);
-            SetInitPlayerStatus(data);
+            var data = await handle;
+
+            //セーブデータがなかった場合初期ステータスを読み込む
+            if (saveData != null) LoadPlayerData(saveData);
+            else SetInitPlayerStatus(data);
         }
+        finally
+        {
+            //値はステータスに写し終えているので、読み込んだアセットはすぐ解放する
+            Addressables.Release(handle);
+        }
+
+        //山札はセーブに関係なく、デッキ編集画面で保存したデッキ(使えなければ初期札)にする
+        AddDeckCards(await _deckRepository.ResolveBattleDeck());
     }
 
     public void DeckInit()
@@ -167,14 +187,23 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         _currentHp.Value = playerStatus.MaxHp;
         _maxCost = playerStatus.MaxCost;
         _cost.Value = _maxCost;
+    }
 
-        for (int i = 0; i < playerStatus.CardId.Count; i++)
+    private void AddDeckCards(IEnumerable<int> cardIds)
+    {
+        foreach (var id in cardIds)
         {
             //カードの読み込み
-            var loadData = _cardDataRepository.FindById(playerStatus.CardId[i]);
-            _deckCardList.Add(loadData);
+            var loadData = _cardDataRepository.FindById(id);
+            //マスタから消えたカードは山札に入れない
+            if (loadData == null)
+            {
+                Debug.LogWarning($"Id:{id}のカードがマスタにないため山札に入れません");
+                continue;
+            }
+            //同じカードが複数枚あっても別の1枚として扱えるよう複製して入れる
+            _deckCardList.Add(loadData.Clone());
         }
-
     }
 
     /// <summary>
@@ -188,6 +217,6 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         _cost.Value = playerData.Cost.Value;
         _maxCost = playerData.MaxCost;
         _gold.Value = playerData.Gold.Value;
-        _deckCardList.CopyTo(playerData.DeckCardList.ToArray(), 0);
+        //山札はセーブから戻さず、SetUpでDeckRepositoryのデッキを使う
     }
 }

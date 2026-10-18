@@ -6,4 +6,7 @@ using UnityEngine;
 public interface ICardDataRepository : IRepository
 {
     public CardData FindById(int id);
+
+    /// <summary>マスタにあるすべてのカード(Id順)</summary>
+    public IReadOnlyList<CardData> GetAll();
 }
