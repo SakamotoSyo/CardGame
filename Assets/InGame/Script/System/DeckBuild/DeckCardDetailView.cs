@@ -53,9 +53,11 @@ public class DeckCardDetailView : MonoBehaviour
         _window.DOScale(1f, 0.25f).SetEase(Ease.OutBack).SetLink(gameObject);
     }
 
-    public void SetCount(int count, int maxCount, bool canPlus)
+    /// <param name="maxCount">デッキに入れられる枚数(同じカードの上限と所持枚数の少ない方)</param>
+    /// <param name="ownedCount">所持している枚数</param>
+    public void SetCount(int count, int maxCount, int ownedCount, bool canPlus)
     {
-        _countText.text = $"デッキに {count} / {maxCount}枚";
+        _countText.text = $"デッキに {count} / {maxCount}枚　(所持 {ownedCount}枚)";
         _plusButton.interactable = canPlus;
         _minusButton.interactable = count > 0;
     }

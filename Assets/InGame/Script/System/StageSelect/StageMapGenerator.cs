@@ -23,6 +23,7 @@ public sealed class StageMapGenerator
     {
         var run = new DungeonRunData
         {
+            RunId = System.Guid.NewGuid().ToString("N"),
             Day = 1,
             Column = Mathf.Clamp(_settings.StartColumn, 0, _settings.Width - 1),
         };

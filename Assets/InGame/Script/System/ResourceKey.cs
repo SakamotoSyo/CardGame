@@ -22,6 +22,7 @@ public static class ResourceKey
         public const string StageSelectScreen = Screen + "/" + Prefix + "StageSelectScreen.prefab";
         public const string MapSelectScreen = Screen + "/" + Prefix + "MapSelectScreen.prefab";
         public const string DeckBuildScreen = Screen + "/" + Prefix + "DeckBuildScreen.prefab";
+        public const string ShopScreen = Screen + "/" + Prefix + "ShopScreen.prefab";
         public const string StateTrun = AnimFolder + "/" + Prefix + "StateTurn.prefab";
     }
 

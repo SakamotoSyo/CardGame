@@ -51,6 +51,11 @@ public sealed class TransitionService : IInitializable
         await ReplaceScreen(ResourceKey.Prefabs.DeckBuildScreen);
     }
 
+    public async UniTask ShopScreen()
+    {
+        await ReplaceScreen(ResourceKey.Prefabs.ShopScreen);
+    }
+
     /// <summary>
     /// 今の画面を閉じて次の画面を開く
     /// 次の画面の準備ができてから閉じるので、途中で失敗しても今の画面は残り、呼び出し元で立て直せる

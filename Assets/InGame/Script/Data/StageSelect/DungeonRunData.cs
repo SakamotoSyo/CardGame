@@ -8,6 +8,8 @@ using System.Collections.Generic;
 [Serializable]
 public sealed class DungeonRunData
 {
+    /// <summary>ランを見分けるId。同じランの報酬を2回渡さないために使う(Idが付く前のセーブでは空)</summary>
+    public string RunId;
     /// <summary>今日の日数(1始まり)</summary>
     public int Day = 1;
     /// <summary>前日に選んだカードの列。今日はこの列とその左右から選ぶ</summary>

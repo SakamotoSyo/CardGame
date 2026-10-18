@@ -1,0 +1,212 @@
+//日本語対応
+using System.IO;
+using Cysharp.Threading.Tasks;
+using UnityEditor;
+using UnityEngine;
+using VContainer;
+using VContainer.Unity;
+
+/// <summary>
+/// 動作確認用のメニュー
+/// </summary>
+public static class CardGameDebugMenu
+{
+    /// <summary>
+    /// 戦闘中のプレイヤーのHPを0にして、敗北(ランの終了とガチャ石の受け取り)を確かめる
+    /// </summary>
+    [MenuItem("Tools/CardGame/Debug/Defeat Player")]
+    public static void DefeatPlayer()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning("Play中の戦闘でだけ使えます");
+            return;
+        }
+        if (!TryResolve<IPlayerStatus>(out var status)) return;
+        status.CurrentHp.Value = 0;
+        Debug.Log("プレイヤーのHPを0にしました");
+    }
+
+    /// <summary>
+    /// Play中のApplicationCompositionRootから登録済みのものを取り出す
+    /// </summary>
+    public static bool TryResolve<T>(out T value)
+    {
+        value = default;
+        var root = LifetimeScope.Find<ApplicationCompositionRoot>();
+        if (root == null || root.Container == null)
+        {
+            Debug.LogWarning("ApplicationCompositionRootが見つかりません。タイトル画面が出てから使ってください");
+            return false;
+        }
+        value = root.Container.Resolve<T>();
+        return true;
+    }
+}
+
+/// <summary>
+/// ガチャ石を増やす・0にするデバッグ用のウィンドウ
+/// Play中はゲーム内のWalletRepositoryを通して変える(画面の表示もすぐ変わる)。停止中はセーブファイルを直接書き換える
+/// </summary>
+public class GachaStoneDebugWindow : EditorWindow
+{
+    private int _amount = 30;
+    /// <summary>Play中に増減している途中ならtrue。連打で重ならないようにする</summary>
+    private bool _isChanging;
+    /// <summary>停止中に表示するセーブファイルの所持数。OnGUIのたびにファイルを読まないよう覚えておく</summary>
+    private int? _fileStone;
+    /// <summary>停止中にセーブファイルを読み込めなかったらtrue</summary>
+    private bool _isFileBroken;
+
+    private static string FilePath => WalletRepository.FilePath;
+
+    [MenuItem("Tools/CardGame/Debug/Gacha Stone")]
+    public static void Open()
+    {
+        GetWindow<GachaStoneDebugWindow>("ガチャ石");
+    }
+
+    private void OnFocus()
+    {
+        //ゲームを動かしたあとや外部で書き換えたあとに、開き直さなくても読み直す
+        _fileStone = null;
+        _isFileBroken = false;
+    }
+
+    private void OnInspectorUpdate()
+    {
+        //Play中の増減や、ゲーム内での消費を表示に反映する
+        Repaint();
+    }
+
+    private void OnGUI()
+    {
+        EditorGUILayout.LabelField(Application.isPlaying ? "Play中：ゲーム内の所持数を変えます" : "停止中：セーブファイルを書き換えます", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("所持数", GetCurrent()?.ToString() ?? (_isFileBroken ? "(セーブファイルを読み込めません)" : "(読み込み中)"));
+        EditorGUILayout.Space();
+
+        using (new EditorGUI.DisabledScope(_isChanging))
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                foreach (var preset in new[] { 3, 10, 30, 100 })
+                {
+                    if (GUILayout.Button($"+{preset}")) Add(preset);
+                }
+            }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                _amount = Mathf.Max(0, EditorGUILayout.IntField("増やす数", _amount));
+                if (GUILayout.Button("増やす", GUILayout.Width(80))) Add(_amount);
+            }
+            EditorGUILayout.Space();
+            if (GUILayout.Button("0にする")) Clear();
+        }
+
+        if (!Application.isPlaying)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.HelpBox(FilePath, MessageType.None);
+        }
+    }
+
+    private int? GetCurrent()
+    {
+        if (Application.isPlaying)
+        {
+            //Play中にゲームがファイルを書き換えるので、停止したら読み直す
+            _fileStone = null;
+            var root = LifetimeScope.Find<ApplicationCompositionRoot>();
+            if (root == null || root.Container == null) return null;
+            return root.Container.Resolve<IWalletRepository>().GachaStone;
+        }
+        //壊れたファイルをOnGUIのたびに読み直してエラーを出し続けないよう、OnFocusまでは読み直さない
+        if (_fileStone == null && !_isFileBroken)
+        {
+            var data = LoadFile();
+            if (data == null) _isFileBroken = true;
+            else _fileStone = data.GachaStone;
+        }
+        return _fileStone;
+    }
+
+    public void Add(int amount)
+    {
+        if (amount <= 0) return;
+        if (Application.isPlaying)
+        {
+            if (!CardGameDebugMenu.TryResolve<IWalletRepository>(out var wallet)) return;
+            Change(wallet.AddStone(amount), $"ガチャ石を{amount}個増やしました").Forget();
+            return;
+        }
+        var data = LoadFile();
+        if (data == null)
+        {
+            Debug.LogWarning("セーブファイルを読み込めないため増やせません。「0にする」で作り直してください");
+            return;
+        }
+        data.GachaStone += amount;
+        SaveFile(data);
+        Debug.Log($"ガチャ石を{amount}個増やしました(現在{data.GachaStone}個)");
+    }
+
+    public void Clear()
+    {
+        if (Application.isPlaying)
+        {
+            if (!CardGameDebugMenu.TryResolve<IWalletRepository>(out var wallet)) return;
+            Change(SpendAll(wallet), "ガチャ石を0にしました").Forget();
+            return;
+        }
+        //読み込めないファイルは作り直す
+        var data = LoadFile() ?? new WalletData();
+        data.GachaStone = 0;
+        SaveFile(data);
+        Debug.Log("ガチャ石を0にしました");
+    }
+
+    /// <summary>
+    /// 読み込みが終わる前に所持数を見ると0になっているので、読み込んでから全部使う
+    /// </summary>
+    private static async UniTask<bool> SpendAll(IWalletRepository wallet)
+    {
+        await wallet.LoadData();
+        return await wallet.TrySpendStone(wallet.GachaStone);
+    }
+
+    private async UniTaskVoid Change(UniTask<bool> change, string message)
+    {
+        _isChanging = true;
+        try
+        {
+            if (await change) Debug.Log(message);
+            else Debug.LogWarning("ガチャ石を変更できませんでした");
+        }
+        finally
+        {
+            _isChanging = false;
+        }
+    }
+
+    /// <returns>読み込めなかったらnull。ファイルが無ければ空のデータ</returns>
+    private static WalletData LoadFile()
+    {
+        if (!File.Exists(FilePath)) return new WalletData();
+        try
+        {
+            return JsonUtility.FromJson<WalletData>(File.ReadAllText(FilePath)) ?? new WalletData();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogWarning($"{FilePath}を読み込めませんでした: {e.Message}");
+            return null;
+        }
+    }
+
+    private void SaveFile(WalletData data)
+    {
+        File.WriteAllText(FilePath, JsonUtility.ToJson(data));
+        _fileStone = data.GachaStone;
+        _isFileBroken = false;
+    }
+}

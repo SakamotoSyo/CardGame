@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using static UiPrefabBuilder;
 
 /// <summary>
 /// デッキ編集画面のPrefabと設定アセットを自動生成するエディタ拡張
@@ -12,40 +13,16 @@ public static class DeckBuildScreenPrefabGenerator
 {
     private const string PrefabPath = "Assets/InGame/Prefab/ScreenPrefab/PrefabDeckBuildScreen.prefab";
     private const string SettingsPath = "Assets/InGame/Data/DeckBuild/DeckBuildSettings.asset";
-    private const string TitlePrefabPath = "Assets/InGame/Prefab/ScreenPrefab/PrefabTitleScreen.prefab";
-    private const string FontPath = "Assets/InGame/Font/ReggaeOne-Regular.ttf";
-    private const string CardFramePath = "Assets/InGame/Image/Card/カードフレーム2黄色M無し-removebg-preview.png";
-    private const string CardBackgroundPath = "Assets/InGame/Image/Card/カードフレーム背景.png";
     private const string AttackIconPath = "Assets/InGame/Image/Icon/戦のアイコン (1).png";
     private const string DefenceIconPath = "Assets/InGame/Image/Icon/シールドアイコン5 (1).png";
 
-    private static readonly Color Gold = new Color(1f, 0.8f, 0.35f);
-    private static readonly Color Ink = new Color(0.23f, 0.16f, 0.1f);
-    private static readonly Color Brown = new Color(0.42f, 0.32f, 0.18f);
-    private static readonly Color ButtonGray = new Color(0.25f, 0.2f, 0.25f);
-    private static readonly Color ButtonGreen = new Color(0.24f, 0.48f, 0.27f);
-    private static readonly Color ButtonRed = new Color(0.7f, 0.12f, 0.12f);
-    private static readonly Color SubText = new Color(1f, 1f, 1f, 0.6f);
-
-    //カード1枚の大きさ(戦闘のカード枠と同じ縦横比)
-    private static readonly Vector2 CardSize = new Vector2(210, 280);
     /// <summary>コストの列数。設定(MaxCostColumn)から決める</summary>
     private static int CostColumnCount;
-
-    private static Font _font;
-    private static Sprite _roundSprite;
-    private static Sprite _knobSprite;
-    private static Sprite _frameSprite;
-    private static Sprite _cardBackgroundSprite;
 
     [MenuItem("Tools/CardGame/Generate DeckBuild Screen Prefab")]
     public static void Generate()
     {
-        _font = AssetDatabase.LoadAssetAtPath<Font>(FontPath);
-        _roundSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-        _knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-        _frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardFramePath);
-        _cardBackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardBackgroundPath);
+        LoadAssets();
         //設定アセットはApplicationCompositionRootから登録するので、ここでは作成と値の更新だけ行う
         var settings = LoadOrCreateSettings();
         //ボタンと棒の数は設定に合わせる。設定を変えたら再生成すればPrefabも揃う
@@ -58,7 +35,7 @@ public static class DeckBuildScreenPrefabGenerator
 
         var bg = CreateImage("Background", canvas, new Color(0.05f, 0.035f, 0.045f));
         Stretch(bg.rectTransform);
-        var bgMap = CreateImage("BackgroundMap", canvas, new Color(1f, 1f, 1f, 0.08f), _cardBackgroundSprite);
+        var bgMap = CreateImage("BackgroundMap", canvas, new Color(1f, 1f, 1f, 0.08f), CardBackgroundSprite);
         Stretch(bgMap.rectTransform);
         bgMap.raycastTarget = false;
 
@@ -133,9 +110,9 @@ public static class DeckBuildScreenPrefabGenerator
         var popup = CreateImage("Popup", canvas, new Color(0f, 0f, 0f, 0.65f));
         Stretch(popup.rectTransform);
         var popupGroup = popup.gameObject.AddComponent<CanvasGroup>();
-        var popupFrame = CreateImage("Frame", popup.transform, Gold, _roundSprite);
+        var popupFrame = CreateImage("Frame", popup.transform, Gold, RoundSprite);
         SetRect(popupFrame.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(820, 320));
-        var popupInner = CreateImage("Inner", popupFrame.transform, new Color(0.07f, 0.05f, 0.1f), _roundSprite);
+        var popupInner = CreateImage("Inner", popupFrame.transform, new Color(0.07f, 0.05f, 0.1f), RoundSprite);
         Stretch(popupInner.rectTransform, 6);
         var popupBody = CreateText("BodyText", popupFrame.transform, "", 30, Color.white, TextAnchor.MiddleCenter);
         SetRect(popupBody.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0, 50), new Vector2(760, 140));
@@ -193,6 +170,15 @@ public static class DeckBuildScreenPrefabGenerator
         Debug.Log($"デッキ編集画面のPrefabを生成しました: {PrefabPath}");
     }
 
+    /// <summary>
+    /// ほかの画面(ショップのガチャ結果など)でも、デッキ編集と同じ見た目のカードの表面を作る
+    /// </summary>
+    public static DeckCardFaceView CreateCardFace(Transform parent)
+    {
+        LoadAssets();
+        return CreateFace(parent);
+    }
+
     private static DeckBuildSettings LoadOrCreateSettings()
     {
         var settings = AssetDatabase.LoadAssetAtPath<DeckBuildSettings>(SettingsPath);
@@ -227,7 +213,7 @@ public static class DeckBuildScreenPrefabGenerator
         SetRect(rect, new Vector2(0.5f, 0.5f), Vector2.zero, CardSize);
         var face = rect.gameObject.AddComponent<DeckCardFaceView>();
 
-        var background = CreateImage("Background", rect, Color.white, _cardBackgroundSprite);
+        var background = CreateImage("Background", rect, Color.white, CardBackgroundSprite);
         //枠の角からはみ出さないよう、枠より一回り小さくする
         SetRect(background.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(2, 0), new Vector2(174, 246));
         background.raycastTarget = false;
@@ -235,7 +221,7 @@ public static class DeckBuildScreenPrefabGenerator
         SetRect(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(2, 22), new Vector2(92, 92));
         icon.preserveAspect = true;
         icon.raycastTarget = false;
-        var frame = CreateImage("Frame", rect, Color.white, _frameSprite);
+        var frame = CreateImage("Frame", rect, Color.white, FrameSprite);
         SetRect(frame.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, CardSize);
         frame.raycastTarget = false;
         var rarity = CreateImage("Rarity", rect, Gold);
@@ -280,13 +266,13 @@ public static class DeckBuildScreenPrefabGenerator
         cardButton.targetGraphic = face.transform.Find("Frame").GetComponent<Image>();
         cardButton.colors = DisabledGrayColors();
 
-        var badge = CreateImage("CountBadge", body.transform, new Color(0f, 0f, 0f, 0.6f), _roundSprite);
+        var badge = CreateImage("CountBadge", body.transform, new Color(0f, 0f, 0f, 0.6f), RoundSprite);
         SetRect(badge.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(64, -18), new Vector2(58, 32));
         badge.raycastTarget = false;
         var count = CreateText("CountText", badge.transform, "0/3", 20, Color.white, TextAnchor.MiddleCenter);
         Stretch(count.rectTransform);
 
-        var overlay = CreateImage("LimitOverlay", body.transform, new Color(0f, 0f, 0f, 0.6f), _roundSprite);
+        var overlay = CreateImage("LimitOverlay", body.transform, new Color(0f, 0f, 0f, 0.6f), RoundSprite);
         SetRect(overlay.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(2, 0), new Vector2(196, 268));
         overlay.raycastTarget = false;
         var limitText = CreateText("Text", overlay.transform, "上限", 40, Color.white, TextAnchor.MiddleCenter);
@@ -320,14 +306,14 @@ public static class DeckBuildScreenPrefabGenerator
     /// </summary>
     private static Button CreateMagnifier(Transform parent, Vector2 pos)
     {
-        var bg = CreateImage("DetailButton", parent, new Color(0f, 0f, 0f, 0.7f), _knobSprite);
+        var bg = CreateImage("DetailButton", parent, new Color(0f, 0f, 0f, 0.7f), KnobSprite);
         SetRect(bg.rectTransform, new Vector2(0.5f, 0.5f), pos, new Vector2(44, 44));
         var button = bg.gameObject.AddComponent<Button>();
         button.targetGraphic = bg;
-        var lens = CreateImage("Lens", bg.transform, Color.white, _knobSprite);
+        var lens = CreateImage("Lens", bg.transform, Color.white, KnobSprite);
         SetRect(lens.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-3, 3), new Vector2(22, 22));
         lens.raycastTarget = false;
-        var hole = CreateImage("Hole", lens.transform, Color.black, _knobSprite);
+        var hole = CreateImage("Hole", lens.transform, Color.black, KnobSprite);
         SetRect(hole.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(14, 14));
         hole.raycastTarget = false;
         var handle = CreateImage("Handle", bg.transform, Color.white);
@@ -348,12 +334,12 @@ public static class DeckBuildScreenPrefabGenerator
         layout.minHeight = layout.preferredHeight = 64;
         var view = rect.gameObject.AddComponent<DeckListRowView>();
 
-        var body = CreateImage("Body", rect, new Color(0.16f, 0.13f, 0.15f), _roundSprite);
+        var body = CreateImage("Body", rect, new Color(0.16f, 0.13f, 0.15f), RoundSprite);
         Stretch(body.rectTransform);
-        var art = CreateImage("Art", body.transform, new Color(1f, 1f, 1f, 0.12f), _cardBackgroundSprite);
+        var art = CreateImage("Art", body.transform, new Color(1f, 1f, 1f, 0.12f), CardBackgroundSprite);
         Stretch(art.rectTransform, 2);
         art.raycastTarget = false;
-        var flash = CreateImage("Flash", body.transform, new Color(1f, 0.91f, 0.65f), _roundSprite);
+        var flash = CreateImage("Flash", body.transform, new Color(1f, 0.91f, 0.65f), RoundSprite);
         Stretch(flash.rectTransform);
         flash.raycastTarget = false;
         var detailHit = CreateImage("DetailButton", body.transform, new Color(0f, 0f, 0f, 0f));
@@ -363,7 +349,7 @@ public static class DeckBuildScreenPrefabGenerator
         var rarity = CreateImage("Rarity", body.transform, Gold);
         SetRect(rarity.rectTransform, new Vector2(0f, 0.5f), new Vector2(4, 0), new Vector2(6, 56));
         rarity.raycastTarget = false;
-        var costBg = CreateImage("Cost", body.transform, Gold, _knobSprite);
+        var costBg = CreateImage("Cost", body.transform, Gold, KnobSprite);
         SetRect(costBg.rectTransform, new Vector2(0f, 0.5f), new Vector2(38, 0), new Vector2(46, 46));
         costBg.raycastTarget = false;
         var cost = CreateText("CostText", costBg.transform, "1", 26, Ink, TextAnchor.MiddleCenter);
@@ -455,9 +441,9 @@ public static class DeckBuildScreenPrefabGenerator
         bgButton.transition = Selectable.Transition.None;
         var view = bg.gameObject.AddComponent<DeckCardDetailView>();
 
-        var window = CreateImage("Window", bg.transform, Gold, _roundSprite);
+        var window = CreateImage("Window", bg.transform, Gold, RoundSprite);
         SetRect(window.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(960, 600));
-        var inner = CreateImage("Inner", window.transform, new Color(0.086f, 0.063f, 0.086f), _roundSprite);
+        var inner = CreateImage("Inner", window.transform, new Color(0.086f, 0.063f, 0.086f), RoundSprite);
         Stretch(inner.rectTransform, 6);
         var faceHolder = CreateRect("FaceHolder", window.transform);
         SetRect(faceHolder, new Vector2(0.5f, 0.5f), new Vector2(-250, 0), CardSize);
@@ -497,18 +483,6 @@ public static class DeckBuildScreenPrefabGenerator
         so.ApplyModifiedPropertiesWithoutUndo();
         bg.gameObject.SetActive(false);
         return view;
-    }
-
-    /// <summary>
-    /// 金色の縁取りをした暗いパネル
-    /// </summary>
-    private static Transform CreatePanel(string name, Transform parent, Vector2 pos, Vector2 size)
-    {
-        var border = CreateImage(name, parent, Brown, _roundSprite);
-        SetRect(border.rectTransform, new Vector2(0.5f, 0.5f), pos, size);
-        var inner = CreateImage("Inner", border.transform, new Color(0.1f, 0.075f, 0.086f, 0.95f), _roundSprite);
-        Stretch(inner.rectTransform, 3);
-        return border.transform;
     }
 
     /// <summary>
@@ -568,7 +542,7 @@ public static class DeckBuildScreenPrefabGenerator
 
     private static InputField CreateInputField(string name, Transform parent, string placeholder)
     {
-        var bg = CreateImage(name, parent, new Color(0.16f, 0.13f, 0.15f), _roundSprite);
+        var bg = CreateImage(name, parent, new Color(0.16f, 0.13f, 0.15f), RoundSprite);
         var input = bg.gameObject.AddComponent<InputField>();
         input.targetGraphic = bg;
         var text = CreateText("Text", bg.transform, "", 24, Color.white, TextAnchor.MiddleLeft);
@@ -583,52 +557,6 @@ public static class DeckBuildScreenPrefabGenerator
         return input;
     }
 
-    /// <summary>
-    /// タイトル画面と同じ設定のCanvasを作る
-    /// </summary>
-    private static GameObject CreateCanvas(Transform parent)
-    {
-        var obj = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        obj.layer = 5;
-        obj.transform.SetParent(parent, false);
-
-        var title = AssetDatabase.LoadAssetAtPath<GameObject>(TitlePrefabPath);
-        var srcCanvas = title != null ? title.GetComponentInChildren<Canvas>(true) : null;
-        if (srcCanvas != null)
-        {
-            EditorUtility.CopySerialized(srcCanvas, obj.GetComponent<Canvas>());
-            EditorUtility.CopySerialized(srcCanvas.GetComponent<CanvasScaler>(), obj.GetComponent<CanvasScaler>());
-            var src = (RectTransform)srcCanvas.transform;
-            var dst = (RectTransform)obj.transform;
-            dst.anchorMin = src.anchorMin;
-            dst.anchorMax = src.anchorMax;
-            dst.pivot = src.pivot;
-            dst.sizeDelta = src.sizeDelta;
-            dst.anchoredPosition3D = src.anchoredPosition3D;
-            dst.localRotation = src.localRotation;
-            dst.localScale = src.localScale;
-        }
-        else
-        {
-            Debug.LogWarning("タイトル画面のCanvasが見つからないためデフォルト設定で生成します");
-            var scaler = obj.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = 0.5f;
-        }
-        return obj;
-    }
-
-    /// <summary>
-    /// 押せないときに灰色に見えるボタンの色
-    /// </summary>
-    private static ColorBlock DisabledGrayColors()
-    {
-        var colors = ColorBlock.defaultColorBlock;
-        colors.disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
-        return colors;
-    }
-
     private static void SetArray(SerializedProperty prop, Object[] values)
     {
         prop.arraySize = values.Length;
@@ -640,70 +568,5 @@ public static class DeckBuildScreenPrefabGenerator
         text.resizeTextForBestFit = true;
         text.resizeTextMinSize = minSize;
         text.resizeTextMaxSize = text.fontSize;
-    }
-
-    private static RectTransform CreateRect(string name, Transform parent)
-    {
-        var obj = new GameObject(name, typeof(RectTransform));
-        obj.layer = 5;
-        obj.transform.SetParent(parent, false);
-        return (RectTransform)obj.transform;
-    }
-
-    private static Image CreateImage(string name, Transform parent, Color color, Sprite sprite = null)
-    {
-        var image = CreateRect(name, parent).gameObject.AddComponent<Image>();
-        image.color = color;
-        image.sprite = sprite;
-        if (sprite != null && sprite == _roundSprite) image.type = Image.Type.Sliced;
-        return image;
-    }
-
-    private static Text CreateText(string name, Transform parent, string text, int size, Color color, TextAnchor anchor)
-    {
-        var t = CreateRect(name, parent).gameObject.AddComponent<Text>();
-        t.font = _font;
-        t.text = text;
-        t.fontSize = size;
-        t.color = color;
-        t.alignment = anchor;
-        t.horizontalOverflow = HorizontalWrapMode.Wrap;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.raycastTarget = false;
-        return t;
-    }
-
-    private static Button CreateButton(string name, Transform parent, string label, int size, Color color, out Text labelText)
-    {
-        var image = CreateImage(name, parent, color, _roundSprite);
-        var button = image.gameObject.AddComponent<Button>();
-        button.targetGraphic = image;
-        button.colors = DisabledGrayColors();
-        labelText = CreateText("Text", image.transform, label, size, Color.white, TextAnchor.MiddleCenter);
-        Stretch(labelText.rectTransform);
-        return button;
-    }
-
-    private static void AddShadow(GameObject obj)
-    {
-        var shadow = obj.AddComponent<Shadow>();
-        shadow.effectColor = new Color(0, 0, 0, 0.8f);
-        shadow.effectDistance = new Vector2(3, -3);
-    }
-
-    private static void Stretch(RectTransform rect, float inset = 0f)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = new Vector2(inset, inset);
-        rect.offsetMax = new Vector2(-inset, -inset);
-    }
-
-    private static void SetRect(RectTransform rect, Vector2 anchor, Vector2 pos, Vector2 size)
-    {
-        rect.anchorMin = rect.anchorMax = anchor;
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = pos;
-        rect.sizeDelta = size;
     }
 }
