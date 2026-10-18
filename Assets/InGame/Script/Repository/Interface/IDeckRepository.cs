@@ -18,10 +18,13 @@ public interface IDeckRepository
     public List<int> GetSavedCardIds();
     /// <summary>初期デッキ(InitialPlayerStatusの札)から、マスタにないカードを除いたもの</summary>
     public UniTask<List<int>> LoadInitialCardIds();
-    /// <summary>枚数と同じカードの枚数がルールを満たしていればtrue</summary>
+    /// <summary>
+    /// 枚数と同じカードの枚数がルールを満たし、どのカードも所持している枚数以内ならtrue
+    /// 所持カード(ICardCollectionRepository)を読み込んでから呼ぶ
+    /// </summary>
     public bool IsPlayable(IReadOnlyList<int> cardIds);
     /// <summary>
-    /// 戦闘で使う山札のカードId。保存したデッキがルールを満たしていればそれを、満たしていなければ初期デッキを使う
+    /// 戦闘で使う山札のカードId。保存したデッキがルールと所持枚数を満たしていればそれを、満たしていなければ初期デッキを使う
     /// </summary>
     public UniTask<List<int>> ResolveBattleDeck();
 }

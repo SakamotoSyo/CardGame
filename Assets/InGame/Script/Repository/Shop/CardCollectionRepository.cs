@@ -21,13 +21,6 @@ public class CardCollectionRepository : ICardCollectionRepository
     private UniTask? _loadTask;
     private readonly Dictionary<int, int> _counts = new Dictionary<int, int>();
 
-    private readonly IDeckRepository _deckRepository;
-
-    public CardCollectionRepository(IDeckRepository deckRepository)
-    {
-        _deckRepository = deckRepository;
-    }
-
     /// <exception cref="IOException">保存済みのファイルを読み込めなかったとき。次に呼ばれたら読み込み直す</exception>
     public async UniTask LoadData()
     {
@@ -59,10 +52,14 @@ public class CardCollectionRepository : ICardCollectionRepository
 
         //所持カードの仕組みより前から遊んでいても組んだデッキが使えなくならないよう、
         //初期デッキと保存済みのデッキのうち多い方の枚数を所持済みにする
-        await _deckRepository.LoadData();
-        AddMax(await _deckRepository.LoadInitialCardIds());
-        AddMax(_deckRepository.GetSavedCardIds());
-        await LocalData.SaveAsyncData(FileName, ToData(_counts));
+        //(DeckRepositoryは所持数でデッキを判定するのでこちらからは使わず、ファイルを直接読む)
+        AddMax(await DeckRepository.LoadRawInitialCardIds());
+        AddMax((await LocalData.LoadAsyncData<DeckData>(DeckRepository.FileName))?.CardIds);
+        //保存できなくてもこのまま使い、次に起動したときにまた同じ内容で作る
+        if (!await LocalData.SaveAsyncData(FileName, ToData(_counts)))
+        {
+            Debug.LogError($"{FileName}を作成できませんでした。次に起動したときに作り直します");
+        }
     }
 
     private void AddMax(IEnumerable<int> cardIds)

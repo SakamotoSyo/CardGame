@@ -49,20 +49,29 @@ public class WalletRepository : IWalletRepository
     public async UniTask<bool> AddStone(int amount)
     {
         if (amount < 0) return false;
-        return await Change(amount);
+        return await Change(amount) == ChangeResult.Changed;
     }
 
     public async UniTask<bool> TrySpendStone(int amount)
     {
         if (amount < 0) return false;
-        return await Change(-amount);
+        return await Change(-amount) == ChangeResult.Changed;
     }
 
     public async UniTask<bool> ReceiveRunReward(RunReward reward)
     {
-        reward.IsReceived = reward.GachaStone >= 0 && await Change(reward.GachaStone, reward.RunId);
+        var result = reward.GachaStone >= 0 ? await Change(reward.GachaStone, reward.RunId) : ChangeResult.Failed;
+        //すでに受け取っていたら石は増えていないので、タイトルで「+N」と見せない
+        if (result == ChangeResult.AlreadyRewarded) return true;
+        reward.IsReceived = result == ChangeResult.Changed;
         PendingRunReward = reward;
         return reward.IsReceived;
+    }
+
+    public void SetUnreceivedRunReward(RunReward reward)
+    {
+        reward.IsReceived = false;
+        PendingRunReward = reward;
     }
 
     public void ClearPendingRunReward()
@@ -74,7 +83,7 @@ public class WalletRepository : IWalletRepository
     /// 所持数を変えて保存する。足りないときや読み込み・保存に失敗したときは元のまま
     /// </summary>
     /// <param name="rewardedRunId">ランの報酬として受け取るときのランのId。同じランの報酬は2回受け取らない</param>
-    private async UniTask<bool> Change(int amount, string rewardedRunId = null)
+    private async UniTask<ChangeResult> Change(int amount, string rewardedRunId = null)
     {
         try
         {
@@ -83,22 +92,22 @@ public class WalletRepository : IWalletRepository
         catch (Exception e)
         {
             Debug.LogException(e);
-            return false;
+            return ChangeResult.Failed;
         }
 
         await _fileLock.WaitAsync();
         try
         {
             //ランの破棄に失敗して同じランでもう一度負けても、報酬を重ねて渡さない
-            if (!string.IsNullOrEmpty(rewardedRunId) && rewardedRunId == _data.LastRewardedRunId) return true;
+            if (!string.IsNullOrEmpty(rewardedRunId) && rewardedRunId == _data.LastRewardedRunId) return ChangeResult.AlreadyRewarded;
             var next = _data.GachaStone + amount;
-            if (next < 0) return false;
+            if (next < 0) return ChangeResult.Failed;
             var saveData = new WalletData
             {
                 GachaStone = next,
                 LastRewardedRunId = string.IsNullOrEmpty(rewardedRunId) ? _data.LastRewardedRunId : rewardedRunId,
             };
-            if (!await LocalData.SaveAsyncData(FileName, saveData)) return false;
+            if (!await LocalData.SaveAsyncData(FileName, saveData)) return ChangeResult.Failed;
             _data = saveData;
         }
         finally
@@ -107,6 +116,14 @@ public class WalletRepository : IWalletRepository
         }
         //通知先で再び増減しても待ち合わせで止まらないよう、ロックを外してから知らせる
         OnGachaStoneChanged?.Invoke(_data.GachaStone);
-        return true;
+        return ChangeResult.Changed;
+    }
+
+    private enum ChangeResult
+    {
+        Changed,
+        /// <summary>同じランの報酬をすでに受け取っていたので変えなかった</summary>
+        AlreadyRewarded,
+        Failed,
     }
 }

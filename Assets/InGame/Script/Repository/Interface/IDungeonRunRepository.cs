@@ -10,7 +10,8 @@ public interface IDungeonRunRepository
     public DungeonRunData Current { get; }
 
     public UniTask LoadData();
-    public UniTask Save();
+    /// <returns>保存に成功したらtrue。進行中のランが無いときもtrue</returns>
+    public UniTask<bool> Save();
     public void StartNewRun(DungeonRunData runData);
 
     /// <summary>ゲームオーバー時などにランを破棄する</summary>

@@ -30,15 +30,15 @@ public class DungeonRunRepository : IDungeonRunRepository
         Current = await LocalData.LoadAsyncData<DungeonRunData>(FileName);
     }
 
-    public async UniTask Save()
+    public async UniTask<bool> Save()
     {
-        if (Current == null) return;
+        if (Current == null) return true;
         await _fileLock.WaitAsync();
         try
         {
             //待っている間に破棄されていたら保存しない
-            if (Current == null) return;
-            await LocalData.SaveAsyncData(FileName, Current);
+            if (Current == null) return true;
+            return await LocalData.SaveAsyncData(FileName, Current);
         }
         finally
         {
