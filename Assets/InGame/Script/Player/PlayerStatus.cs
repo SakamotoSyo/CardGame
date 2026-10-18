@@ -56,10 +56,19 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         else
         {
             Debug.Log("ステータスロード中");
-            var data = await Addressables.LoadAssetAsync<InitialPlayerStatus>(ResourceKey.MasterData.PlayerInitStatus);
-            //デッキ編集画面で保存したデッキがあれば初期札の代わりに使う
-            await _deckRepository.LoadData();
-            SetInitPlayerStatus(data, _deckRepository.Current?.CardIds);
+            var handle = Addressables.LoadAssetAsync<InitialPlayerStatus>(ResourceKey.MasterData.PlayerInitStatus);
+            try
+            {
+                var data = await handle;
+                //デッキ編集画面で保存したデッキがあれば初期札の代わりに使う
+                await _deckRepository.LoadData();
+                SetInitPlayerStatus(data, _deckRepository.Current?.CardIds);
+            }
+            finally
+            {
+                //値はステータスに写し終えているので、読み込んだアセットはすぐ解放する
+                Addressables.Release(handle);
+            }
         }
     }
 
@@ -178,7 +187,18 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         _maxCost = playerStatus.MaxCost;
         _cost.Value = _maxCost;
 
-        var cardIds = deckCardIds ?? playerStatus.CardId;
+        AddDeckCards(deckCardIds ?? playerStatus.CardId);
+
+        //保存したデッキのカードがすべてマスタから消えていたら、山札が空にならないよう初期ステータスの札を使う
+        if (_deckCardList.Count == 0 && deckCardIds != null)
+        {
+            Debug.LogWarning("保存したデッキに使えるカードがないため、初期の札を使います");
+            AddDeckCards(playerStatus.CardId);
+        }
+    }
+
+    private void AddDeckCards(IReadOnlyList<int> cardIds)
+    {
         for (int i = 0; i < cardIds.Count; i++)
         {
             //カードの読み込み
@@ -191,7 +211,6 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
             }
             _deckCardList.Add(loadData);
         }
-
     }
 
     /// <summary>

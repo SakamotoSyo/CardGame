@@ -41,14 +41,6 @@ public class DeckBuildSettings : ScriptableObject
         return RarityColors[Mathf.Clamp(rare - 1, 0, RarityColors.Count - 1)];
     }
 
-    /// <summary>
-    /// カードの分類(効果マスタの設定)
-    /// </summary>
-    public static EffectType GetEffectType(CardData card)
-    {
-        return card.EffectType;
-    }
-
     public static string GetEffectTypeName(EffectType type)
     {
         switch (type)

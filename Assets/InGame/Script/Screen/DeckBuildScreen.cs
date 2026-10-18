@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.UI;
 
 /// <summary>
@@ -60,6 +61,8 @@ public class DeckBuildScreen : ScreenBase
 
     private readonly Dictionary<int, DeckCardTileView> _tiles = new Dictionary<int, DeckCardTileView>();
     private readonly Dictionary<int, DeckListRowView> _rows = new Dictionary<int, DeckListRowView>();
+    /// <summary>キーワード検索に使う、名前とタグを除いた説明文。入力のたびに作り直さないよう一度だけ作る</summary>
+    private readonly Dictionary<int, string> _searchTexts = new Dictionary<int, string>();
     /// <summary>編集中のデッキ(カードのId)。コスト順に並べる</summary>
     private readonly List<int> _deck = new List<int>();
     /// <summary>最後に保存したデッキ。編集中のデッキと違えば未保存</summary>
@@ -70,11 +73,14 @@ public class DeckBuildScreen : ScreenBase
     private IDeckRepository _deckRepository;
     private DeckBuildSettings _settings;
     private bool _isBusy = true;
+    /// <summary>デッキと一覧を作り終えたらtrue。読み込みに失敗したときは編集させない</summary>
+    private bool _isLoaded;
     /// <summary>絞り込むコストの列。-1なら全て</summary>
     private int _costFilter = -1;
     private UniTaskCompletionSource<bool> _popupClosed;
 
-    private bool IsDirty => !_deck.SequenceEqual(_savedDeck);
+    private bool CanEdit => _isLoaded && !_isBusy;
+    private bool IsDirty => _isLoaded && !_deck.SequenceEqual(_savedDeck);
 
     [VContainer.Inject]
     public void Construct(TransitionService transitionService,
@@ -96,8 +102,25 @@ public class DeckBuildScreen : ScreenBase
         _rowTemplate.gameObject.SetActive(false);
         _fadeImage.color = Color.black;
         _fadeImage.raycastTarget = true;
+        ValidateCostColumns();
         BindView();
         SetUp().Forget();
+    }
+
+    /// <summary>
+    /// コストの列数は設定(MaxCostColumn)に合わせる。ボタンや棒の数がずれていたら絞り込みとグラフが食い違うので知らせる
+    /// </summary>
+    private void ValidateCostColumns()
+    {
+        var columnCount = _settings.MaxCostColumn + 1;
+        if (_costFilterButtons.Length != columnCount + 1)
+        {
+            Debug.LogError($"コストの絞り込みボタンは「全て」+{columnCount}個必要です(現在{_costFilterButtons.Length}個)");
+        }
+        if (_costCurve.ColumnCount != columnCount)
+        {
+            Debug.LogError($"コスト分布の棒は{columnCount}本必要です(現在{_costCurve.ColumnCount}本)");
+        }
     }
 
     private void BindView()
@@ -127,12 +150,15 @@ public class DeckBuildScreen : ScreenBase
         {
             await LoadDeck();
             CreateViews();
+            _isLoaded = true;
             Refresh();
             ApplyFilter();
         }
         catch (System.Exception e)
         {
             //読み込みに失敗しても暗転したまま操作できなくならないよう、タイトルへ戻れる状態にする
+            //一覧が途中までしか作られていないこともあるので、編集はさせない(_isLoadedはfalseのまま)
+            _isLoaded = false;
             Debug.LogException(e);
             _hintText.text = "デッキの読み込みに失敗しました。タイトルへ戻ってください";
             _saveButton.interactable = false;
@@ -153,8 +179,17 @@ public class DeckBuildScreen : ScreenBase
         IEnumerable<int> cardIds = _deckRepository.Current?.CardIds;
         if (cardIds == null)
         {
-            var initialStatus = await AssetLoader.LoadAssetAsync<InitialPlayerStatus>(ResourceKey.MasterData.PlayerInitStatus);
-            cardIds = initialStatus.CardId;
+            //AssetLoaderのキャッシュは他の画面と共有なので使わず、自分のハンドルで読んで写したらすぐ解放する
+            var handle = Addressables.LoadAssetAsync<InitialPlayerStatus>(ResourceKey.MasterData.PlayerInitStatus);
+            try
+            {
+                var initialStatus = await handle;
+                cardIds = initialStatus.CardId.ToList();
+            }
+            finally
+            {
+                Addressables.Release(handle);
+            }
         }
 
         //マスタから消えたカードは外しておく
@@ -193,6 +228,7 @@ public class DeckBuildScreen : ScreenBase
             tile.OnAdd += t => AddCard(t.Card);
             tile.OnDetail += t => OpenDetail(t.Card);
             _tiles.Add(card.Id, tile);
+            _searchTexts.Add(card.Id, $"{card.Name}\n{Regex.Replace(card.Description ?? "", "<.*?>", "")}");
 
             var row = Instantiate(_rowTemplate, _rowContent);
             row.name = $"Row_{card.Id}";
@@ -207,7 +243,7 @@ public class DeckBuildScreen : ScreenBase
 
     private void AddCard(CardData card)
     {
-        if (_isBusy || card == null) return;
+        if (!CanEdit || card == null) return;
         if (!CanAdd(card.Id))
         {
             _hintText.text = _deck.Count >= _settings.MaxDeckCount
@@ -224,14 +260,14 @@ public class DeckBuildScreen : ScreenBase
 
     private void RemoveCard(CardData card)
     {
-        if (_isBusy || card == null || !_deck.Remove(card.Id)) return;
+        if (!CanEdit || card == null || !_deck.Remove(card.Id)) return;
         Refresh();
         if (CountOf(card.Id) > 0) _rows[card.Id].Flash();
     }
 
     private void RemoveAllCopies(CardData card)
     {
-        if (_isBusy || card == null) return;
+        if (!CanEdit || card == null) return;
         if (_deck.RemoveAll(id => id == card.Id) == 0) return;
         Refresh();
     }
@@ -266,13 +302,13 @@ public class DeckBuildScreen : ScreenBase
         _deckEmptyText.SetActive(_deck.Count == 0);
 
         //デッキのステータス
-        var curve = new int[_costCurve.ColumnCount];
+        var curve = new int[_settings.MaxCostColumn + 1];
         var types = new Dictionary<EffectType, int>();
         foreach (var id in _deck)
         {
             var card = _cardDataRepository.FindById(id);
-            curve[Mathf.Min(CostColumn(card.Cost), curve.Length - 1)]++;
-            var type = DeckBuildSettings.GetEffectType(card);
+            curve[CostColumn(card.Cost)]++;
+            var type = card.EffectType;
             types[type] = types.TryGetValue(type, out var n) ? n + 1 : 1;
         }
         _costCurve.SetCounts(curve);
@@ -310,9 +346,7 @@ public class DeckBuildScreen : ScreenBase
         {
             var card = tile.Card;
             var matchCost = _costFilter < 0 || CostColumn(card.Cost) == _costFilter;
-            var matchKeyword = keyword.Length == 0
-                || card.Name.Contains(keyword)
-                || Regex.Replace(card.Description ?? "", "<.*?>", "").Contains(keyword);
+            var matchKeyword = keyword.Length == 0 || _searchTexts[card.Id].Contains(keyword);
             var visible = matchCost && matchKeyword;
             tile.gameObject.SetActive(visible);
             if (visible) visibleCount++;
@@ -327,7 +361,7 @@ public class DeckBuildScreen : ScreenBase
 
     private void OpenDetail(CardData card)
     {
-        if (_isBusy) return;
+        if (!CanEdit) return;
         _detail.Show(card, _settings);
         RefreshDetail();
     }
@@ -340,11 +374,16 @@ public class DeckBuildScreen : ScreenBase
 
     private async UniTask Save()
     {
-        if (_isBusy || _deck.Count < _settings.MinDeckCount) return;
+        if (!CanEdit || _deck.Count < _settings.MinDeckCount) return;
         _isBusy = true;
         try
         {
-            await _deckRepository.Save(new DeckData { CardIds = new List<int>(_deck) });
+            if (!await _deckRepository.Save(new DeckData { CardIds = new List<int>(_deck) }))
+            {
+                //保存できなかったときは未保存のままにして、もう一度保存できるようにする
+                _hintText.text = "デッキを保存できませんでした。もう一度保存してください";
+                return;
+            }
             _savedDeck.Clear();
             _savedDeck.AddRange(_deck);
             Refresh();
@@ -360,7 +399,7 @@ public class DeckBuildScreen : ScreenBase
 
     private async UniTask ClearDeck()
     {
-        if (_isBusy || _deck.Count == 0) return;
+        if (!CanEdit || _deck.Count == 0) return;
         _isBusy = true;
         var isClear = await ShowPopup("デッキのカードをすべて外しますか？\n(保存するまでは元に戻せます)", "すべて外す", "やめる");
         if (isClear)
@@ -414,7 +453,6 @@ public class DeckBuildScreen : ScreenBase
 
     private void OnDestroy()
     {
-        AssetLoader.Release(ResourceKey.MasterData.PlayerInitStatus);
         AssetLoader.Release(ResourceKey.Prefabs.DeckBuildScreen);
     }
 }

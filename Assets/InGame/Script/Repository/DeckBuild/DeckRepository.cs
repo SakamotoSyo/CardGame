@@ -30,15 +30,17 @@ public class DeckRepository : IDeckRepository
         Current ??= loaded;
     }
 
-    public async UniTask Save(DeckData deckData)
+    public async UniTask<bool> Save(DeckData deckData)
     {
         //呼び出し元が後からリストを書き換えても保存内容が変わらないよう複製して持つ
-        Current = new DeckData { CardIds = new List<int>(deckData.CardIds) };
-        var saveData = Current;
+        var saveData = new DeckData { CardIds = new List<int>(deckData.CardIds) };
         await _fileLock.WaitAsync();
         try
         {
-            await LocalData.SaveAsyncData(FileName, saveData);
+            //ファイルに書けなかったときは、メモリ上のデッキもファイルと同じ内容のままにする
+            if (!await LocalData.SaveAsyncData(FileName, saveData)) return false;
+            Current = saveData;
+            return true;
         }
         finally
         {

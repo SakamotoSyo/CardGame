@@ -41,7 +41,7 @@ public class DeckCardDetailView : MonoBehaviour
         Card = card;
         _face.SetCard(card, settings);
         _nameText.text = card.Name;
-        _infoText.text = $"コスト {card.Cost}　/　{DeckBuildSettings.GetEffectTypeName(DeckBuildSettings.GetEffectType(card))}　/　レアリティ {card.Rare}";
+        _infoText.text = $"コスト {card.Cost}　/　{DeckBuildSettings.GetEffectTypeName(card.EffectType)}　/　レアリティ {card.Rare}";
         _descriptionText.text = card.Description;
 
         gameObject.SetActive(true);

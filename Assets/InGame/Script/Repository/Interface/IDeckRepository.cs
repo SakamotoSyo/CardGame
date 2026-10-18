@@ -10,5 +10,6 @@ public interface IDeckRepository
     public DeckData Current { get; }
 
     public UniTask LoadData();
-    public UniTask Save(DeckData deckData);
+    /// <returns>保存に成功したらtrue。失敗したときはCurrentも変わらない</returns>
+    public UniTask<bool> Save(DeckData deckData);
 }

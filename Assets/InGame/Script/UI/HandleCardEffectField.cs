@@ -63,7 +63,8 @@ public class HandleCardEffectField : MonoBehaviour
     {
         var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         var saveDistance = 99999f;
-        var saveIdx = 0;
+        //狙える敵がいなければ-1のままにして、どの敵も選ばない
+        var saveIdx = -1;
 
         for (int i = 0; i < _env.EnemyViewList.Count; i++)
         {
@@ -90,7 +91,7 @@ public class HandleCardEffectField : MonoBehaviour
             }
         }
 
-        _env.TargetEnemy = saveIdx;
+        if (saveIdx >= 0) _env.TargetEnemy = saveIdx;
     }
 
     private void OnTriggerExit2D(Collider2D collision)

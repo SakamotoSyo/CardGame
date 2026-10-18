@@ -45,7 +45,7 @@ public class DeckListRowView : MonoBehaviour
         Card = card;
         _costText.text = card.Cost.ToString();
         _nameText.text = card.Name;
-        var icon = settings.GetIcon(DeckBuildSettings.GetEffectType(card));
+        var icon = settings.GetIcon(card.EffectType);
         _iconImage.sprite = icon;
         _iconImage.enabled = icon != null;
         _rarityImage.color = settings.GetRarityColor(card.Rare);
