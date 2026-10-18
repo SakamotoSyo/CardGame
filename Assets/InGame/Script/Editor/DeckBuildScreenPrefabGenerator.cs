@@ -45,7 +45,8 @@ public static class DeckBuildScreenPrefabGenerator
         _knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
         _frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardFramePath);
         _cardBackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardBackgroundPath);
-        var settings = LoadOrCreateSettings();
+        //設定アセットはApplicationCompositionRootから登録するので、ここでは作成と値の更新だけ行う
+        LoadOrCreateSettings();
 
         var root = new GameObject("PrefabDeckBuildScreen");
         root.layer = 5;
@@ -150,7 +151,6 @@ public static class DeckBuildScreenPrefabGenerator
         var scope = scopeObj.AddComponent<DeckBuildScreenLifeTimeScope>();
         scope.parentReference = VContainer.Unity.ParentReference.Create<ApplicationCompositionRoot>();
         var scopeSo = new SerializedObject(scope);
-        scopeSo.FindProperty("_deckBuildSettings").objectReferenceValue = settings;
         var inject = scopeSo.FindProperty("autoInjectGameObjects");
         inject.arraySize = 1;
         inject.GetArrayElementAtIndex(0).objectReferenceValue = root;

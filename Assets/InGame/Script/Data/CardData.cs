@@ -47,6 +47,14 @@ public sealed class CardData
         }
     }
 
+    /// <summary>
+    /// 山札に入れる1枚分を作る。同じカードを複数枚入れても、手札や捨て札で別の1枚として扱えるようにする
+    /// </summary>
+    public CardData Clone()
+    {
+        return (CardData)MemberwiseClone();
+    }
+
     public void ReflectsLoadCardData(LoadCardData data)
     {
         Id = data.Id;

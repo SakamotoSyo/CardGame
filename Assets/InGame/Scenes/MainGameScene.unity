@@ -426,6 +426,7 @@ MonoBehaviour:
   autoRun: 1
   autoInjectGameObjects: []
   _mainUi: {fileID: 1517377193}
+  _deckBuildSettings: {fileID: 11400000, guid: 60a913a78c6a4cc4e9dc006ba65012eb, type: 2}
 --- !u!1 &1517377188
 GameObject:
   m_ObjectHideFlags: 0

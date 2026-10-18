@@ -28,7 +28,8 @@ public class DeckCostCurveView : MonoBehaviour
             var height = Mathf.Max(_minBarHeight, _maxBarHeight * count / max);
             _bars[i].DOKill();
             _bars[i].DOSizeDelta(new Vector2(_bars[i].sizeDelta.x, height), 0.25f).SetEase(Ease.OutCubic).SetLink(gameObject);
-            _countTexts[i].text = count > 0 ? count.ToString() : "";
+            //棒と数字の数がずれていても範囲外を触らない
+            if (i < _countTexts.Length) _countTexts[i].text = count > 0 ? count.ToString() : "";
         }
     }
 }

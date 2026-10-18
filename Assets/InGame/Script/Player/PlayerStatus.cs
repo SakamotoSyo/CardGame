@@ -47,28 +47,34 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         _graveyardCards.Clear();
 
         var saveData = await LocalData.LoadAsyncData<PlayerStatus>("PlayerStatus");
-
-        //セーブデータがなかった場合初期札を読み込む
-        if (saveData != null)
+        //JsonUtilityはコンストラクタを通さずに作るので、ReactivePropertyがnullのままになる。読めなかったものとして初期ステータスを使う
+        if (saveData != null && saveData.MaxHp == null)
         {
-            LoadPlayerData(saveData);
+            Debug.LogWarning("PlayerStatusのセーブデータを読み込めないため、初期ステータスを使います");
+            saveData = null;
         }
-        else
+
+        Debug.Log("ステータスロード中");
+        var handle = Addressables.LoadAssetAsync<InitialPlayerStatus>(ResourceKey.MasterData.PlayerInitStatus);
+        try
         {
-            Debug.Log("ステータスロード中");
-            var handle = Addressables.LoadAssetAsync<InitialPlayerStatus>(ResourceKey.MasterData.PlayerInitStatus);
-            try
+            var data = await handle;
+            await _deckRepository.LoadData();
+
+            //セーブデータがなかった場合初期ステータスを読み込む
+            if (saveData != null) LoadPlayerData(saveData);
+            else SetInitPlayerStatus(data);
+
+            //セーブに山札が無ければ、デッキ編集画面で保存したデッキ(使えなければ初期札)を山札にする
+            if (_deckCardList.Count == 0)
             {
-                var data = await handle;
-                //デッキ編集画面で保存したデッキがあれば初期札の代わりに使う
-                await _deckRepository.LoadData();
-                SetInitPlayerStatus(data, _deckRepository.Current?.CardIds);
+                AddDeckCards(_deckRepository.ResolveBattleDeck(data.CardId));
             }
-            finally
-            {
-                //値はステータスに写し終えているので、読み込んだアセットはすぐ解放する
-                Addressables.Release(handle);
-            }
+        }
+        finally
+        {
+            //値はステータスに写し終えているので、読み込んだアセットはすぐ解放する
+            Addressables.Release(handle);
         }
     }
 
@@ -179,37 +185,28 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
     /// 初期ステータスをセットする関数
     /// </summary>
     /// <param name="playerStatus"></param>
-    /// <param name="deckCardIds">保存したデッキ。nullなら初期ステータスの札を使う</param>
-    public void SetInitPlayerStatus(InitialPlayerStatus playerStatus, IReadOnlyList<int> deckCardIds = null)
+    public void SetInitPlayerStatus(InitialPlayerStatus playerStatus)
     {
         _maxHp.Value = playerStatus.MaxHp;
         _currentHp.Value = playerStatus.MaxHp;
         _maxCost = playerStatus.MaxCost;
         _cost.Value = _maxCost;
-
-        AddDeckCards(deckCardIds ?? playerStatus.CardId);
-
-        //保存したデッキのカードがすべてマスタから消えていたら、山札が空にならないよう初期ステータスの札を使う
-        if (_deckCardList.Count == 0 && deckCardIds != null)
-        {
-            Debug.LogWarning("保存したデッキに使えるカードがないため、初期の札を使います");
-            AddDeckCards(playerStatus.CardId);
-        }
     }
 
-    private void AddDeckCards(IReadOnlyList<int> cardIds)
+    private void AddDeckCards(IEnumerable<int> cardIds)
     {
-        for (int i = 0; i < cardIds.Count; i++)
+        foreach (var id in cardIds)
         {
             //カードの読み込み
-            var loadData = _cardDataRepository.FindById(cardIds[i]);
+            var loadData = _cardDataRepository.FindById(id);
             //マスタから消えたカードは山札に入れない
             if (loadData == null)
             {
-                Debug.LogWarning($"Id:{cardIds[i]}のカードがマスタにないため山札に入れません");
+                Debug.LogWarning($"Id:{id}のカードがマスタにないため山札に入れません");
                 continue;
             }
-            _deckCardList.Add(loadData);
+            //同じカードが複数枚あっても別の1枚として扱えるよう複製して入れる
+            _deckCardList.Add(loadData.Clone());
         }
     }
 
@@ -224,6 +221,7 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         _cost.Value = playerData.Cost.Value;
         _maxCost = playerData.MaxCost;
         _gold.Value = playerData.Gold.Value;
-        _deckCardList.CopyTo(playerData.DeckCardList.ToArray(), 0);
+        //Jsonから戻したカードには効果が入っていないので、Idからマスタのカードを引き直す
+        if (playerData.DeckCardList != null) AddDeckCards(playerData.DeckCardList.Where(c => c != null).Select(c => c.Id));
     }
 }

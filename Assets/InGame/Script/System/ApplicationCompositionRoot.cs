@@ -13,9 +13,12 @@ public sealed class ApplicationCompositionRoot : LifetimeScope
 {
     [SerializeField] private MainUi _mainUi;
     [SerializeField] private FadeScript _fadeScript;
+    [Tooltip("デッキのルール。デッキ編集画面と戦闘の両方で使う")]
+    [SerializeField] private DeckBuildSettings _deckBuildSettings;
     protected override void Configure(IContainerBuilder builder)
     {
         builder.Register<IDataLoader, MasterData>(Lifetime.Singleton);
+        builder.RegisterInstance(_deckBuildSettings);
 
         ///Ripository
         builder.Register<IEnemyDataRepository, EnemyDataRepositoryMock>(Lifetime.Singleton);

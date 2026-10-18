@@ -1,14 +1,13 @@
 //日本語対応
-using UnityEngine;
 using VContainer;
 using VContainer.Unity;
 
+/// <summary>
+/// デッキのルール(DeckBuildSettings)は戦闘でも使うのでApplicationCompositionRootで登録している
+/// </summary>
 public class DeckBuildScreenLifeTimeScope : LifetimeScope
 {
-    [SerializeField] private DeckBuildSettings _deckBuildSettings;
-
     protected override void Configure(IContainerBuilder builder)
     {
-        builder.RegisterInstance(_deckBuildSettings);
     }
 }
