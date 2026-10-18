@@ -41,9 +41,17 @@ public class EnemyView : ActorViewBase
     public async UniTask DeleteIcon()
     {
         Assert.IsTrue(_iconScriptList.Count != 0);
-        await _iconScriptList[0].SelectIcon();
-        Destroy(_iconScriptList[0].gameObject);
-        _iconScriptList.RemoveAt(0);
+        var icon = _iconScriptList[0];
+        try
+        {
+            await icon.SelectIcon();
+        }
+        catch (OperationCanceledException)
+        {
+            //演出中にDie()でアイコンが消されると演出が取り消される
+        }
+        //アイコンが消されていても、行動の終わりは知らせて敵のターンを止めない
+        if (_iconScriptList.Remove(icon) && icon != null) Destroy(icon.gameObject);
         _attackAnimEnd.OnNext(new());
     }
 

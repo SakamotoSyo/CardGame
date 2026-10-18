@@ -86,8 +86,9 @@ public class DeckRepository : IDeckRepository
         return cardIds.GroupBy(id => id).All(g => g.Count() <= _settings.MaxSameCardCount);
     }
 
-    public List<int> ResolveBattleDeck(IReadOnlyList<int> initialCardIds)
+    public async UniTask<List<int>> ResolveBattleDeck()
     {
+        await LoadData();
         var saved = GetSavedCardIds();
         if (saved != null && IsPlayable(saved)) return saved;
 
@@ -95,7 +96,13 @@ public class DeckRepository : IDeckRepository
         {
             UnityEngine.Debug.LogWarning("保存したデッキがルールを満たしていないため、初期デッキを使います");
         }
-        return ExistingCards(initialCardIds);
+        var initial = await LoadInitialCardIds();
+        //初期デッキは他に代わりが無いのでそのまま使うが、ルールを満たしていなければ設定の見直しを促す
+        if (!IsPlayable(initial))
+        {
+            UnityEngine.Debug.LogError($"初期デッキがデッキのルールを満たしていません(現在{initial.Count}枚)。InitialPlayerStatusの札かDeckBuildSettingsを見直してください");
+        }
+        return initial;
     }
 
     /// <summary>マスタから消えたカードを除く</summary>

@@ -29,7 +29,8 @@ public static class DeckBuildScreenPrefabGenerator
 
     //カード1枚の大きさ(戦闘のカード枠と同じ縦横比)
     private static readonly Vector2 CardSize = new Vector2(210, 280);
-    private const int CostColumnCount = 7;
+    /// <summary>コストの列数。設定(MaxCostColumn)から決める</summary>
+    private static int CostColumnCount;
 
     private static Font _font;
     private static Sprite _roundSprite;
@@ -46,7 +47,9 @@ public static class DeckBuildScreenPrefabGenerator
         _frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardFramePath);
         _cardBackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardBackgroundPath);
         //設定アセットはApplicationCompositionRootから登録するので、ここでは作成と値の更新だけ行う
-        LoadOrCreateSettings();
+        var settings = LoadOrCreateSettings();
+        //ボタンと棒の数は設定に合わせる。設定を変えたら再生成すればPrefabも揃う
+        CostColumnCount = Mathf.Max(1, settings.MaxCostColumn + 1);
 
         var root = new GameObject("PrefabDeckBuildScreen");
         root.layer = 5;
@@ -198,7 +201,6 @@ public static class DeckBuildScreenPrefabGenerator
             settings = ScriptableObject.CreateInstance<DeckBuildSettings>();
             AssetDatabase.CreateAsset(settings, SettingsPath);
         }
-        settings.MaxCostColumn = CostColumnCount - 1;
         if (settings.AttackIcon == null) settings.AttackIcon = AssetDatabase.LoadAssetAtPath<Sprite>(AttackIconPath);
         if (settings.DefenceIcon == null) settings.DefenceIcon = AssetDatabase.LoadAssetAtPath<Sprite>(DefenceIconPath);
         if (settings.RarityColors.Count == 0)

@@ -24,13 +24,37 @@ public class TitleScreen : ScreenBase
         _titleButton.onClick.AddListener(() =>
         {
             //_transitionService.BattleStart().Forget();
-            _transitionService.StageSelectScreen().Forget();
+            Transition(_transitionService.StageSelectScreen).Forget();
         });
 
         _deckBuildButton.onClick.AddListener(() =>
         {
-            _transitionService.DeckBuildScreen().Forget();
+            Transition(_transitionService.DeckBuildScreen).Forget();
         });
+    }
+
+    /// <summary>
+    /// 連打で遷移が重ならないよう、遷移中はボタンを押せなくする。失敗したら押せるように戻す
+    /// </summary>
+    private async UniTask Transition(System.Func<UniTask> transition)
+    {
+        if (!_titleButton.interactable || !_deckBuildButton.interactable) return;
+        SetButtonsInteractable(false);
+        try
+        {
+            await transition();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogException(e);
+            if (this != null) SetButtonsInteractable(true);
+        }
+    }
+
+    private void SetButtonsInteractable(bool interactable)
+    {
+        _titleButton.interactable = interactable;
+        _deckBuildButton.interactable = interactable;
     }
     public void PopExit()
     {

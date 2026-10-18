@@ -23,5 +23,5 @@ public interface IDeckRepository
     /// <summary>
     /// 戦闘で使う山札のカードId。保存したデッキがルールを満たしていればそれを、満たしていなければ初期デッキを使う
     /// </summary>
-    public List<int> ResolveBattleDeck(IReadOnlyList<int> initialCardIds);
+    public UniTask<List<int>> ResolveBattleDeck();
 }

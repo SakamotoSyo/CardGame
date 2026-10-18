@@ -59,23 +59,19 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         try
         {
             var data = await handle;
-            await _deckRepository.LoadData();
 
             //セーブデータがなかった場合初期ステータスを読み込む
             if (saveData != null) LoadPlayerData(saveData);
             else SetInitPlayerStatus(data);
-
-            //セーブに山札が無ければ、デッキ編集画面で保存したデッキ(使えなければ初期札)を山札にする
-            if (_deckCardList.Count == 0)
-            {
-                AddDeckCards(_deckRepository.ResolveBattleDeck(data.CardId));
-            }
         }
         finally
         {
             //値はステータスに写し終えているので、読み込んだアセットはすぐ解放する
             Addressables.Release(handle);
         }
+
+        //山札はセーブに関係なく、デッキ編集画面で保存したデッキ(使えなければ初期札)にする
+        AddDeckCards(await _deckRepository.ResolveBattleDeck());
     }
 
     public void DeckInit()
@@ -221,7 +217,6 @@ public sealed class PlayerStatus : StatusModelBase, IPlayerStatus
         _cost.Value = playerData.Cost.Value;
         _maxCost = playerData.MaxCost;
         _gold.Value = playerData.Gold.Value;
-        //Jsonから戻したカードには効果が入っていないので、Idからマスタのカードを引き直す
-        if (playerData.DeckCardList != null) AddDeckCards(playerData.DeckCardList.Where(c => c != null).Select(c => c.Id));
+        //山札はセーブから戻さず、SetUpでDeckRepositoryのデッキを使う
     }
 }
