@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
+using static UiPrefabBuilder;
 
 /// <summary>
 /// ショップ画面のPrefabとガチャの設定アセットを自動生成し、タイトル画面にショップへのボタンを追加するエディタ拡張
@@ -10,25 +11,6 @@ public static class ShopScreenPrefabGenerator
 {
     private const string PrefabPath = "Assets/InGame/Prefab/ScreenPrefab/PrefabShopScreen.prefab";
     private const string SettingsPath = "Assets/InGame/Data/Shop/GachaSettings.asset";
-    private const string TitlePrefabPath = "Assets/InGame/Prefab/ScreenPrefab/PrefabTitleScreen.prefab";
-    private const string FontPath = "Assets/InGame/Font/ReggaeOne-Regular.ttf";
-    private const string CardFramePath = "Assets/InGame/Image/Card/カードフレーム2黄色M無し-removebg-preview.png";
-    private const string CardBackgroundPath = "Assets/InGame/Image/Card/カードフレーム背景.png";
-
-    private static readonly Color Gold = new Color(1f, 0.8f, 0.35f);
-    private static readonly Color Ink = new Color(0.23f, 0.16f, 0.1f);
-    private static readonly Color Brown = new Color(0.42f, 0.32f, 0.18f);
-    private static readonly Color ButtonGray = new Color(0.25f, 0.2f, 0.25f);
-    private static readonly Color ButtonGreen = new Color(0.24f, 0.48f, 0.27f);
-    private static readonly Color ButtonRed = new Color(0.7f, 0.12f, 0.12f);
-    private static readonly Color SubText = new Color(1f, 1f, 1f, 0.6f);
-    private static readonly Vector2 CardSize = new Vector2(210, 280);
-
-    private static Font _font;
-    private static Sprite _roundSprite;
-    private static Sprite _knobSprite;
-    private static Sprite _frameSprite;
-    private static Sprite _cardBackgroundSprite;
 
     [MenuItem("Tools/CardGame/Generate Shop Screen Prefab")]
     public static void Generate()
@@ -43,7 +25,7 @@ public static class ShopScreenPrefabGenerator
 
         var bg = CreateImage("Background", canvas, new Color(0.05f, 0.035f, 0.045f));
         Stretch(bg.rectTransform);
-        var bgMap = CreateImage("BackgroundMap", canvas, new Color(1f, 1f, 1f, 0.08f), _cardBackgroundSprite);
+        var bgMap = CreateImage("BackgroundMap", canvas, new Color(1f, 1f, 1f, 0.08f), CardBackgroundSprite);
         Stretch(bgMap.rectTransform);
         bgMap.raycastTarget = false;
 
@@ -176,9 +158,9 @@ public static class ShopScreenPrefabGenerator
             var popup = CreateImage("RewardPopup", canvas, new Color(0f, 0f, 0f, 0.65f));
             Stretch(popup.rectTransform);
             var popupGroup = popup.gameObject.AddComponent<CanvasGroup>();
-            var frame = CreateImage("Frame", popup.transform, Gold, _roundSprite);
+            var frame = CreateImage("Frame", popup.transform, Gold, RoundSprite);
             SetRect(frame.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(760, 420));
-            var inner = CreateImage("Inner", frame.transform, new Color(0.07f, 0.05f, 0.1f), _roundSprite);
+            var inner = CreateImage("Inner", frame.transform, new Color(0.07f, 0.05f, 0.1f), RoundSprite);
             Stretch(inner.rectTransform, 6);
             var header = CreateText("TitleText", frame.transform, "ランの結果", 44, Gold, TextAnchor.MiddleCenter);
             SetRect(header.rectTransform, new Vector2(0.5f, 1f), new Vector2(0, -55), new Vector2(700, 60));
@@ -204,15 +186,6 @@ public static class ShopScreenPrefabGenerator
         }
     }
 
-    private static void LoadAssets()
-    {
-        _font = AssetDatabase.LoadAssetAtPath<Font>(FontPath);
-        _roundSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
-        _knobSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/Knob.psd");
-        _frameSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardFramePath);
-        _cardBackgroundSprite = AssetDatabase.LoadAssetAtPath<Sprite>(CardBackgroundPath);
-    }
-
     private static GachaSettings LoadOrCreateSettings()
     {
         var settings = AssetDatabase.LoadAssetAtPath<GachaSettings>(SettingsPath);
@@ -229,13 +202,13 @@ public static class ShopScreenPrefabGenerator
     /// </summary>
     private static Text CreateStoneLabel(Transform parent, Vector2 anchor, Vector2 pos)
     {
-        var bg = CreateImage("StoneLabel", parent, new Color(0f, 0f, 0f, 0.55f), _roundSprite);
+        var bg = CreateImage("StoneLabel", parent, new Color(0f, 0f, 0f, 0.55f), RoundSprite);
         SetRect(bg.rectTransform, anchor, pos, new Vector2(320, 66));
         bg.raycastTarget = false;
-        var gem = CreateImage("Gem", bg.transform, new Color(0.45f, 0.85f, 1f), _knobSprite);
+        var gem = CreateImage("Gem", bg.transform, new Color(0.45f, 0.85f, 1f), KnobSprite);
         SetRect(gem.rectTransform, new Vector2(0f, 0.5f), new Vector2(36, 0), new Vector2(40, 40));
         gem.raycastTarget = false;
-        var shine = CreateImage("Shine", gem.transform, new Color(1f, 1f, 1f, 0.8f), _knobSprite);
+        var shine = CreateImage("Shine", gem.transform, new Color(1f, 1f, 1f, 0.8f), KnobSprite);
         SetRect(shine.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-6, 6), new Vector2(12, 12));
         shine.raycastTarget = false;
         var text = CreateText("StoneText", bg.transform, "ガチャ石 0", 30, Gold, TextAnchor.MiddleLeft);
@@ -249,16 +222,16 @@ public static class ShopScreenPrefabGenerator
     /// </summary>
     private static RectTransform CreateCardBack(Transform parent)
     {
-        var border = CreateImage("CardBack", parent, Gold, _roundSprite);
+        var border = CreateImage("CardBack", parent, Gold, RoundSprite);
         SetRect(border.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, CardSize);
         border.raycastTarget = false;
-        var inner = CreateImage("Inner", border.transform, new Color(0.3f, 0.18f, 0.35f), _roundSprite);
+        var inner = CreateImage("Inner", border.transform, new Color(0.3f, 0.18f, 0.35f), RoundSprite);
         Stretch(inner.rectTransform, 8);
         inner.raycastTarget = false;
-        var pattern = CreateImage("Pattern", border.transform, new Color(1f, 1f, 1f, 0.15f), _cardBackgroundSprite);
+        var pattern = CreateImage("Pattern", border.transform, new Color(1f, 1f, 1f, 0.15f), CardBackgroundSprite);
         Stretch(pattern.rectTransform, 12);
         pattern.raycastTarget = false;
-        var emblem = CreateImage("Emblem", border.transform, Gold, _knobSprite);
+        var emblem = CreateImage("Emblem", border.transform, Gold, KnobSprite);
         SetRect(emblem.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(110, 110));
         emblem.raycastTarget = false;
         var mark = CreateText("Mark", emblem.transform, "？", 64, Ink, TextAnchor.MiddleCenter);
@@ -277,13 +250,13 @@ public static class ShopScreenPrefabGenerator
         var body = CreateRect("Body", rect);
         SetRect(body, new Vector2(0.5f, 0.5f), Vector2.zero, CardSize);
 
-        var glow = CreateImage("Glow", body, new Color(1f, 0.8f, 0.35f, 0f), _knobSprite);
+        var glow = CreateImage("Glow", body, new Color(1f, 0.8f, 0.35f, 0f), KnobSprite);
         SetRect(glow.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(320, 390));
         glow.raycastTarget = false;
         //表はデッキ編集と同じ見た目にする
         var face = DeckBuildScreenPrefabGenerator.CreateCardFace(body);
         var back = CreateCardBack(body);
-        var badge = CreateImage("NewBadge", body, ButtonRed, _roundSprite);
+        var badge = CreateImage("NewBadge", body, ButtonRed, RoundSprite);
         SetRect(badge.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(72, 128), new Vector2(84, 40));
         badge.rectTransform.localEulerAngles = new Vector3(0, 0, -12);
         badge.raycastTarget = false;
@@ -300,131 +273,5 @@ public static class ShopScreenPrefabGenerator
         so.ApplyModifiedPropertiesWithoutUndo();
         rect.gameObject.SetActive(false);
         return view;
-    }
-
-    private static Transform CreatePanel(string name, Transform parent, Vector2 pos, Vector2 size)
-    {
-        var border = CreateImage(name, parent, Brown, _roundSprite);
-        SetRect(border.rectTransform, new Vector2(0.5f, 0.5f), pos, size);
-        var inner = CreateImage("Inner", border.transform, new Color(0.1f, 0.075f, 0.086f, 0.95f), _roundSprite);
-        Stretch(inner.rectTransform, 3);
-        return border.transform;
-    }
-
-    /// <summary>
-    /// タイトル画面と同じ設定のCanvasを作る
-    /// </summary>
-    private static GameObject CreateCanvas(Transform parent)
-    {
-        var obj = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-        obj.layer = 5;
-        obj.transform.SetParent(parent, false);
-
-        var title = AssetDatabase.LoadAssetAtPath<GameObject>(TitlePrefabPath);
-        var srcCanvas = title != null ? title.GetComponentInChildren<Canvas>(true) : null;
-        if (srcCanvas != null)
-        {
-            EditorUtility.CopySerialized(srcCanvas, obj.GetComponent<Canvas>());
-            EditorUtility.CopySerialized(srcCanvas.GetComponent<CanvasScaler>(), obj.GetComponent<CanvasScaler>());
-            var src = (RectTransform)srcCanvas.transform;
-            var dst = (RectTransform)obj.transform;
-            dst.anchorMin = src.anchorMin;
-            dst.anchorMax = src.anchorMax;
-            dst.pivot = src.pivot;
-            dst.sizeDelta = src.sizeDelta;
-            dst.anchoredPosition3D = src.anchoredPosition3D;
-            dst.localRotation = src.localRotation;
-            dst.localScale = src.localScale;
-        }
-        else
-        {
-            Debug.LogWarning("タイトル画面のCanvasが見つからないためデフォルト設定で生成します");
-            var scaler = obj.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = 0.5f;
-        }
-        return obj;
-    }
-
-    /// <summary>
-    /// 押せないときに灰色に見えるボタンの色
-    /// </summary>
-    private static ColorBlock DisabledGrayColors()
-    {
-        var colors = ColorBlock.defaultColorBlock;
-        colors.disabledColor = new Color(0.45f, 0.45f, 0.45f, 1f);
-        return colors;
-    }
-
-    private static RectTransform CreateRect(string name, Transform parent)
-    {
-        var obj = new GameObject(name, typeof(RectTransform));
-        obj.layer = 5;
-        obj.transform.SetParent(parent, false);
-        return (RectTransform)obj.transform;
-    }
-
-    private static Image CreateImage(string name, Transform parent, Color color, Sprite sprite = null)
-    {
-        var image = CreateRect(name, parent).gameObject.AddComponent<Image>();
-        image.color = color;
-        image.sprite = sprite;
-        if (sprite != null && sprite == _roundSprite) image.type = Image.Type.Sliced;
-        return image;
-    }
-
-    private static Text CreateText(string name, Transform parent, string text, int size, Color color, TextAnchor anchor)
-    {
-        var t = CreateRect(name, parent).gameObject.AddComponent<Text>();
-        t.font = _font;
-        t.text = text;
-        t.fontSize = size;
-        t.color = color;
-        t.alignment = anchor;
-        t.horizontalOverflow = HorizontalWrapMode.Wrap;
-        t.verticalOverflow = VerticalWrapMode.Overflow;
-        t.raycastTarget = false;
-        return t;
-    }
-
-    private static Button CreateButton(string name, Transform parent, string label, int size, Color color, out Text labelText)
-    {
-        var image = CreateImage(name, parent, color, _roundSprite);
-        var button = image.gameObject.AddComponent<Button>();
-        button.targetGraphic = image;
-        button.colors = DisabledGrayColors();
-        labelText = CreateText("Text", image.transform, label, size, Color.white, TextAnchor.MiddleCenter);
-        Stretch(labelText.rectTransform);
-        return button;
-    }
-
-    private static void AddShadow(GameObject obj)
-    {
-        var shadow = obj.AddComponent<Shadow>();
-        shadow.effectColor = new Color(0, 0, 0, 0.8f);
-        shadow.effectDistance = new Vector2(3, -3);
-    }
-
-    private static void SetLayer(Transform t, int layer)
-    {
-        t.gameObject.layer = layer;
-        foreach (Transform child in t) SetLayer(child, layer);
-    }
-
-    private static void Stretch(RectTransform rect, float inset = 0f)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = new Vector2(inset, inset);
-        rect.offsetMax = new Vector2(-inset, -inset);
-    }
-
-    private static void SetRect(RectTransform rect, Vector2 anchor, Vector2 pos, Vector2 size)
-    {
-        rect.anchorMin = rect.anchorMax = anchor;
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = pos;
-        rect.sizeDelta = size;
     }
 }

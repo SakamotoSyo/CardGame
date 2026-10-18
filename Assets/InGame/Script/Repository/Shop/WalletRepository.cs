@@ -1,6 +1,9 @@
 //日本語対応
+using System;
+using System.IO;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 /// <summary>
 /// ガチャ石をローカルのJsonに保存する
@@ -8,6 +11,7 @@ using Cysharp.Threading.Tasks;
 public class WalletRepository : IWalletRepository
 {
     public const string FileName = "WalletData.json";
+    public static string FilePath => Path.Combine(Application.persistentDataPath, FileName);
 
     /// <summary>増やす・減らすが重なっても数がずれないよう、変更と保存を1つずつ実行する</summary>
     private readonly SemaphoreSlim _fileLock = new SemaphoreSlim(1, 1);
@@ -19,15 +23,27 @@ public class WalletRepository : IWalletRepository
     public event System.Action<int> OnGachaStoneChanged;
     public RunReward PendingRunReward { get; private set; }
 
+    /// <exception cref="IOException">保存済みのファイルを読み込めなかったとき。次に呼ばれたら読み込み直す</exception>
     public async UniTask LoadData()
     {
         _loadTask ??= LoadInternal().Preserve();
-        await _loadTask.Value;
+        try
+        {
+            await _loadTask.Value;
+        }
+        catch
+        {
+            _loadTask = null;
+            throw;
+        }
     }
 
     private async UniTask LoadInternal()
     {
-        _data = await LocalData.LoadAsyncData<WalletData>(FileName) ?? new WalletData();
+        var data = await LocalData.LoadAsyncData<WalletData>(FileName);
+        //ファイルはあるのに読めないときに0個として扱うと、次の保存で持っていたガチャ石を上書きして失ってしまう
+        if (data == null && File.Exists(FilePath)) throw new IOException($"{FileName}を読み込めませんでした");
+        _data = data ?? new WalletData();
     }
 
     public async UniTask<bool> AddStone(int amount)
@@ -44,9 +60,9 @@ public class WalletRepository : IWalletRepository
 
     public async UniTask<bool> ReceiveRunReward(RunReward reward)
     {
-        if (!await AddStone(reward.GachaStone)) return false;
+        reward.IsReceived = reward.GachaStone >= 0 && await Change(reward.GachaStone, reward.RunId);
         PendingRunReward = reward;
-        return true;
+        return reward.IsReceived;
     }
 
     public void ClearPendingRunReward()
@@ -55,17 +71,33 @@ public class WalletRepository : IWalletRepository
     }
 
     /// <summary>
-    /// 所持数を変えて保存する。足りないときや保存に失敗したときは元のまま
+    /// 所持数を変えて保存する。足りないときや読み込み・保存に失敗したときは元のまま
     /// </summary>
-    private async UniTask<bool> Change(int amount)
+    /// <param name="rewardedRunId">ランの報酬として受け取るときのランのId。同じランの報酬は2回受け取らない</param>
+    private async UniTask<bool> Change(int amount, string rewardedRunId = null)
     {
-        await LoadData();
+        try
+        {
+            await LoadData();
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+            return false;
+        }
+
         await _fileLock.WaitAsync();
         try
         {
+            //ランの破棄に失敗して同じランでもう一度負けても、報酬を重ねて渡さない
+            if (!string.IsNullOrEmpty(rewardedRunId) && rewardedRunId == _data.LastRewardedRunId) return true;
             var next = _data.GachaStone + amount;
             if (next < 0) return false;
-            var saveData = new WalletData { GachaStone = next };
+            var saveData = new WalletData
+            {
+                GachaStone = next,
+                LastRewardedRunId = string.IsNullOrEmpty(rewardedRunId) ? _data.LastRewardedRunId : rewardedRunId,
+            };
             if (!await LocalData.SaveAsyncData(FileName, saveData)) return false;
             _data = saveData;
         }

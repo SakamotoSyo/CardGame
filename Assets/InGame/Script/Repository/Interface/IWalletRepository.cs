@@ -17,7 +17,11 @@ public interface IWalletRepository
     public UniTask<bool> AddStone(int amount);
     /// <returns>足りていて保存にも成功したらtrue。それ以外は所持数も変わらない</returns>
     public UniTask<bool> TrySpendStone(int amount);
-    /// <summary>ランの報酬を受け取り、タイトルで表示できるよう覚えておく</summary>
+    /// <summary>
+    /// ランの報酬を受け取り、タイトルで表示できるよう覚えておく(受け取れなかったときも結果を伝えるために覚えておく)
+    /// 同じRunIdの報酬をすでに受け取っていたら、ガチャ石は増やさずにtrueを返す
+    /// </summary>
+    /// <returns>受け取れた(すでに受け取っていた)らtrue</returns>
     public UniTask<bool> ReceiveRunReward(RunReward reward);
     /// <summary>報酬を表示し終えたら呼ぶ</summary>
     public void ClearPendingRunReward();

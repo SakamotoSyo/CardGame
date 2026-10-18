@@ -64,7 +64,10 @@ public sealed class GachaService
         {
             //カードを渡せなかったので、払ったガチャ石を返す
             Debug.LogError("所持カードを保存できなかったため、ガチャ石を返します");
-            await _walletRepository.AddStone(cost);
+            if (!await _walletRepository.AddStone(cost))
+            {
+                Debug.LogError($"ガチャ石{cost}個を返せませんでした");
+            }
             return null;
         }
         return results;
@@ -75,20 +78,22 @@ public sealed class GachaService
     /// </summary>
     private CardData Pick(IReadOnlyList<CardData> cards)
     {
-        var groups = cards.GroupBy(c => c.Rare).ToList();
-        var total = groups.Sum(g => _settings.GetRarityWeight(g.Key));
-        if (total <= 0f) return cards[Random.Range(0, cards.Count)];
+        //重みが0のレアリティは出さない
+        var groups = cards.GroupBy(c => c.Rare).Where(g => _settings.GetRarityWeight(g.Key) > 0f).ToList();
+        if (groups.Count == 0) return RandomOf(cards);
 
-        var value = Random.value * total;
+        var value = Random.value * groups.Sum(g => _settings.GetRarityWeight(g.Key));
         foreach (var group in groups)
         {
-            value -= _settings.GetRarityWeight(group.Key);
-            if (value <= 0f) return RandomOf(group.ToList());
+            var weight = _settings.GetRarityWeight(group.Key);
+            if (value < weight) return RandomOf(group.ToList());
+            value -= weight;
         }
+        //Random.valueが1のときはここに来るので、最後のレアリティにする
         return RandomOf(groups[groups.Count - 1].ToList());
     }
 
-    private static CardData RandomOf(List<CardData> cards)
+    private static CardData RandomOf(IReadOnlyList<CardData> cards)
     {
         return cards[Random.Range(0, cards.Count)];
     }

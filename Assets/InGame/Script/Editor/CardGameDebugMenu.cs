@@ -53,13 +53,21 @@ public class GachaStoneDebugWindow : EditorWindow
     private int _amount = 30;
     /// <summary>Play中に増減している途中ならtrue。連打で重ならないようにする</summary>
     private bool _isChanging;
+    /// <summary>停止中に表示するセーブファイルの所持数。OnGUIのたびにファイルを読まないよう覚えておく</summary>
+    private int? _fileStone;
 
-    private static string FilePath => Path.Combine(Application.persistentDataPath, WalletRepository.FileName);
+    private static string FilePath => WalletRepository.FilePath;
 
     [MenuItem("Tools/CardGame/Debug/Gacha Stone")]
     public static void Open()
     {
         GetWindow<GachaStoneDebugWindow>("ガチャ石");
+    }
+
+    private void OnFocus()
+    {
+        //ゲームを動かしたあとや外部で書き換えたあとに、開き直さなくても読み直す
+        _fileStone = null;
     }
 
     private void OnInspectorUpdate()
@@ -103,11 +111,14 @@ public class GachaStoneDebugWindow : EditorWindow
     {
         if (Application.isPlaying)
         {
+            //Play中にゲームがファイルを書き換えるので、停止したら読み直す
+            _fileStone = null;
             var root = LifetimeScope.Find<ApplicationCompositionRoot>();
             if (root == null || root.Container == null) return null;
             return root.Container.Resolve<IWalletRepository>().GachaStone;
         }
-        return LoadFile().GachaStone;
+        _fileStone ??= LoadFile().GachaStone;
+        return _fileStone;
     }
 
     public void Add(int amount)
@@ -130,11 +141,22 @@ public class GachaStoneDebugWindow : EditorWindow
         if (Application.isPlaying)
         {
             if (!CardGameDebugMenu.TryResolve<IWalletRepository>(out var wallet)) return;
-            Change(wallet.TrySpendStone(wallet.GachaStone), "ガチャ石を0にしました").Forget();
+            Change(SpendAll(wallet), "ガチャ石を0にしました").Forget();
             return;
         }
-        SaveFile(new WalletData());
+        var data = LoadFile();
+        data.GachaStone = 0;
+        SaveFile(data);
         Debug.Log("ガチャ石を0にしました");
+    }
+
+    /// <summary>
+    /// 読み込みが終わる前に所持数を見ると0になっているので、読み込んでから全部使う
+    /// </summary>
+    private static async UniTask<bool> SpendAll(IWalletRepository wallet)
+    {
+        await wallet.LoadData();
+        return await wallet.TrySpendStone(wallet.GachaStone);
     }
 
     private async UniTaskVoid Change(UniTask<bool> change, string message)
@@ -157,8 +179,9 @@ public class GachaStoneDebugWindow : EditorWindow
         return JsonUtility.FromJson<WalletData>(File.ReadAllText(FilePath)) ?? new WalletData();
     }
 
-    private static void SaveFile(WalletData data)
+    private void SaveFile(WalletData data)
     {
         File.WriteAllText(FilePath, JsonUtility.ToJson(data));
+        _fileStone = data.GachaStone;
     }
 }

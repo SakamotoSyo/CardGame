@@ -49,6 +49,8 @@ public class ShopScreen : ScreenBase
     private GachaSettings _gachaSettings;
     private DeckBuildSettings _deckBuildSettings;
     private bool _isBusy = true;
+    /// <summary>ガチャ石を読み込めたらtrue。読み込みに失敗したときは引かせない</summary>
+    private bool _isLoaded;
     private Sequence _resultSequence;
 
     [VContainer.Inject]
@@ -88,6 +90,7 @@ public class ShopScreen : ScreenBase
         try
         {
             await _walletRepository.LoadData();
+            _isLoaded = true;
             Refresh();
             _hintText.text = "ランで進んだ日数分のガチャ石がもらえます";
         }
@@ -116,13 +119,13 @@ public class ShopScreen : ScreenBase
     {
         var stone = _walletRepository.GachaStone;
         _stoneText.text = $"ガチャ石 {stone}";
-        _singleButton.interactable = stone >= _gachaSettings.SingleCost;
-        _multiButton.interactable = stone >= _gachaSettings.MultiCost;
+        _singleButton.interactable = _isLoaded && stone >= _gachaSettings.SingleCost;
+        _multiButton.interactable = _isLoaded && stone >= _gachaSettings.MultiCost;
     }
 
     private async UniTask Draw(int count, int cost)
     {
-        if (_isBusy) return;
+        if (_isBusy || !_isLoaded) return;
         if (_walletRepository.GachaStone < cost)
         {
             _hintText.text = "ガチャ石が足りません";
@@ -141,6 +144,14 @@ public class ShopScreen : ScreenBase
             _stoneText.rectTransform.DOKill(true);
             _stoneText.rectTransform.DOPunchScale(Vector3.one * 0.15f, 0.3f, 6, 0.8f).SetLink(gameObject);
             await ShowResult(results);
+        }
+        catch (Exception e)
+        {
+            //所持カードを読み込めなかったときなど(この場合はガチャ石を払う前に止まる)
+            Debug.LogException(e);
+            if (this == null) return;
+            Refresh();
+            _hintText.text = "ガチャを引けませんでした。もう一度お試しください";
         }
         finally
         {

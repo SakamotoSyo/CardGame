@@ -45,23 +45,36 @@ public sealed class BattleResultService
         var run = _runRepository.Current;
         if (run != null)
         {
+            if (string.IsNullOrEmpty(run.RunId))
+            {
+                //Idが付く前のランは、破棄に失敗して次に起動したときも同じIdになるよう、先に付けて保存しておく
+                run.RunId = System.Guid.NewGuid().ToString("N");
+                await _runRepository.Save();
+            }
             //1日目で負けたら0日、DAY 8で負けたら7日進んだことになる
             var advancedDays = Mathf.Max(0, run.Day - 1);
             var reward = new RunReward
             {
+                RunId = run.RunId,
                 Day = run.Day,
                 AdvancedDays = advancedDays,
                 GachaStone = advancedDays * _gachaSettings.StonePerDay,
             };
-            //渡せなかったときにランだけ消えて報酬を失わないよう、渡せたときだけ破棄する
+            //保存できなくてもランは破棄する(残すと負けた戦闘をやり直せてしまう)。受け取れなかったことはタイトルで伝える
             if (!await _walletRepository.ReceiveRunReward(reward))
             {
-                Debug.LogError("ガチャ石を保存できなかったため、ランを破棄せずにタイトルへ戻ります");
-                await _transitionService.BackToTitleScreen();
-                return;
+                Debug.LogError("ガチャ石を保存できませんでした");
             }
         }
-        await _runRepository.DeleteRun();
+        //破棄に失敗してランが残っても、報酬はRunIdで重ねて渡さないのでタイトルへは戻る
+        try
+        {
+            await _runRepository.DeleteRun();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogException(e);
+        }
         await _transitionService.BackToTitleScreen();
     }
 }

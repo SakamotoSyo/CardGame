@@ -1,8 +1,11 @@
 //日本語対応
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using UnityEngine;
 
 /// <summary>
 /// 所持カードをローカルのJsonに保存する
@@ -10,6 +13,7 @@ using Cysharp.Threading.Tasks;
 public class CardCollectionRepository : ICardCollectionRepository
 {
     public const string FileName = "CardCollectionData.json";
+    public static string FilePath => Path.Combine(Application.persistentDataPath, FileName);
 
     /// <summary>同じファイルへの書き込みが重なってJsonが壊れないよう、変更と保存を1つずつ実行する</summary>
     private readonly SemaphoreSlim _fileLock = new SemaphoreSlim(1, 1);
@@ -24,15 +28,26 @@ public class CardCollectionRepository : ICardCollectionRepository
         _deckRepository = deckRepository;
     }
 
+    /// <exception cref="IOException">保存済みのファイルを読み込めなかったとき。次に呼ばれたら読み込み直す</exception>
     public async UniTask LoadData()
     {
         _loadTask ??= LoadInternal().Preserve();
-        await _loadTask.Value;
+        try
+        {
+            await _loadTask.Value;
+        }
+        catch
+        {
+            _loadTask = null;
+            throw;
+        }
     }
 
     private async UniTask LoadInternal()
     {
         var data = await LocalData.LoadAsyncData<CardCollectionData>(FileName);
+        //ファイルはあるのに読めないときに作り直すと、ガチャで手に入れたカードを上書きして失ってしまう
+        if (data == null && File.Exists(FilePath)) throw new IOException($"{FileName}を読み込めませんでした");
         if (data != null)
         {
             foreach (var card in data.Cards)
@@ -66,7 +81,15 @@ public class CardCollectionRepository : ICardCollectionRepository
 
     public async UniTask<bool> AddCards(IReadOnlyList<int> cardIds)
     {
-        await LoadData();
+        try
+        {
+            await LoadData();
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+            return false;
+        }
         await _fileLock.WaitAsync();
         try
         {

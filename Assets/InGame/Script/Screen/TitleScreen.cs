@@ -66,14 +66,25 @@ public class TitleScreen : ScreenBase
     /// </summary>
     private async UniTask ShowWallet()
     {
-        await _walletRepository.LoadData();
-        if (this == null) return;
-        UpdateStoneText(_walletRepository.GachaStone);
+        try
+        {
+            await _walletRepository.LoadData();
+            if (this == null) return;
+            UpdateStoneText(_walletRepository.GachaStone);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogException(e);
+            if (this == null) return;
+            _stoneText.text = "ガチャ石 ?";
+        }
 
         var reward = _walletRepository.PendingRunReward;
         if (reward == null) return;
         _walletRepository.ClearPendingRunReward();
-        _rewardBodyText.text = $"DAY {reward.Day} で力尽きた…\n{reward.AdvancedDays}日進んだので\n<color=#FFCC59>ガチャ石 +{reward.GachaStone}</color>";
+        _rewardBodyText.text = reward.IsReceived
+            ? $"DAY {reward.Day} で力尽きた…\n{reward.AdvancedDays}日進んだので\n<color=#FFCC59>ガチャ石 +{reward.GachaStone}</color>"
+            : $"DAY {reward.Day} で力尽きた…\n<color=#FF6666>ガチャ石 +{reward.GachaStone} を保存できませんでした</color>";
         _rewardPopup.gameObject.SetActive(true);
         _rewardPopup.alpha = 0f;
         _rewardPopup.transform.localScale = Vector3.one * 0.9f;
